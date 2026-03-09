@@ -8,7 +8,7 @@ export default defineConfig({
   site: "https://chrono-kinesis.yyyoichi.com",
   trailingSlash: "never",
   build: {
-    format: "file",
+    format: "preserve",
   },
   integrations: [
     starlight({
