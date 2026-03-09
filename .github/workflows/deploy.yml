@@ -21,6 +21,7 @@ jobs:
         with:
           path: ./apps/docs 
           node-version: 24
+          package-manager: pnpm
 
   deploy:
     needs: build
