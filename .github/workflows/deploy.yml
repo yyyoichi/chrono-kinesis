@@ -16,14 +16,13 @@ jobs:
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v5
-      - name: Build Core Library
-        run: pnpm --filter @yyyoichi/chrono-kinesis build
       - name: Install, build, and upload your site
         uses: withastro/action@v5
         with:
           path: ./apps/docs 
           node-version: 24
           package-manager: pnpm
+          build-cmd: pnpm --filter @yyyoichi/chrono-kinesis build & pnpm run build
 
   deploy:
     needs: build
