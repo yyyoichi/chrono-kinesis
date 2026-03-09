@@ -1,0 +1,36 @@
+---
+title: chrono-kinesis
+description: イベントドリブンなバネアニメーションの作成ができるJavaScriptライブラリです！
+template: splash
+hero:
+  tagline: イベントドリブンなバネアニメーションの作成ができるJavaScriptライブラリです！
+  actions:
+    - text: Example Guide
+      link: /guides/example
+      icon: right-arrow
+    - text: GitHub
+      link: https://github.com/yyyoichi/chrono-kinesis
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Features
+
+<CardGrid stagger>
+	<Card title="なんにでもバネ" icon="information">
+		移動、回転、透過、ぼかし、スケール、、あらゆるプロパティにバネを適用できる Web Animation API ベースのアニメーションライブラリです。
+	</Card>
+	<Card title="最小限の駆動" icon="rocket">
+		特定位置にスクロール到達、マウスがホバー、ユーザクリック、あらゆるイベントに対して駆動して、十分に減退後にはrequestAnimationFrameは停止します。
+	</Card>
+	<Card title="柔軟なターゲット" icon="right-arrow">
+		マウス、固定要素に向かう放物線、移動中のDOMであっても、直感的にターゲットとして設定可能です。
+	</Card>
+	<Card title="フレームワーク非依存" icon="setting">
+		ReactやAstro、Vue..などフレームワークで利用できます。
+	</Card>
+	{/* <Card title="実装サンプル" icon="open-book">
+	</Card> */}
+</CardGrid>
