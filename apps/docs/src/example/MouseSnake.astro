@@ -1,0 +1,42 @@
+---
+export const title = "アニメーションDOM追従";
+type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
+---
+
+<div  id="mouse-snake-box" {...Astro.props}>
+  <div id="mouse-snake-pointer" style="width: 1rem; height: 1rem; background-color: cadetblue; margin-top: 0;"></div>
+</div>
+
+<script>
+  import {DefaultSimulatorService, DomPhysics, DomSource, DomVisualizer, Kinetics, MousePositionClock, SpringEngine} from "@yyyoichi/chrono-kinesis"
+  const simulation = new DefaultSimulatorService({tickRate: 0.5});
+
+  const box = document.getElementById("mouse-snake-box")!;
+  const mouse = new MousePositionClock(box);
+  const pointer = new DomSource(document.getElementById("mouse-snake-pointer")!);
+
+  const vis = new DomVisualizer();
+  const engine = new SpringEngine({ settleMs: 400, zeta: 0.7 })
+  simulation.add({
+    clock: mouse,
+    target: mouse,
+    kinetics: new Kinetics(pointer.position(), {engine: engine}),
+    physics: new DomPhysics(pointer, vis)
+  });
+
+  let target = pointer;
+  for(let i = 1; i <= 5; i++) {
+    const clone = pointer.clone({
+      opacity: `${1 - (0.1 * i)}`
+    }, box);
+    const eg = engine.clone({ settleMs: 400 - i * 10})
+    simulation.add({
+      clock: mouse,
+      target: target,
+      kinetics: new Kinetics(clone.position(), {engine: eg}),
+      physics: new DomPhysics(clone, vis)
+    });
+    target = clone;
+  };
+  simulation.run();
+</script>

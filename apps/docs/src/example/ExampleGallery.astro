@@ -1,0 +1,89 @@
+---
+import { Code, TabItem, Tabs } from "@astrojs/starlight/components";
+import type { AstroComponentFactory } from "astro/runtime/server/index.js";
+
+type ExampleModule = {
+  default: AstroComponentFactory;
+  title?: string;
+};
+
+const modules = import.meta.glob<ExampleModule>("./*.astro", { eager: true });
+const rawSources = import.meta.glob("./*.astro", {
+  eager: true,
+  query: "?raw",
+  import: "default",
+});
+
+const demoStyle =
+  "width: 100%; height: 200px; overflow: hidden; position:relative; background-color: var(--ec-frm-edBg); border: var(--ec-brdWd) solid var(--ec-brdCol); border-radius: calc(var(--ec-brdRad) + var(--ec-brdWd));";
+
+const splitPascalCase = (text: string) => text.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+
+const normalizeCode = (code: string) => {
+  const normalized = code.replace(/\r\n/g, "\n");
+  const lines = normalized.split("\n");
+  const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
+  const minIndent =
+    nonEmptyLines.length > 0
+      ? Math.min(
+          ...nonEmptyLines.map((line) => {
+            const match = line.match(/^[ \t]*/);
+            return match ? match[0].length : 0;
+          }),
+        )
+      : 0;
+
+  return lines
+    .map((line) => line.slice(minIndent).replace(/[ \t]+$/g, ""))
+    .join("\n")
+    .replace(/^[ \t]+$/gm, "")
+    .trim();
+};
+
+const examples = Object.entries(modules)
+  .filter(([path]) => !path.endsWith("/ExampleGallery.astro"))
+  .map(([path, module]) => {
+    const fileName = path.split("/").pop() ?? "";
+    const name = fileName.replace(".astro", "");
+    const source = (rawSources[path] as string | undefined) ?? "";
+    const title = module.title?.trim() || splitPascalCase(name);
+    const javascriptCode = normalizeCode(source.match(/<script>([\s\S]*?)<\/script>/)?.[1] ?? "");
+    const htmlCode = normalizeCode(
+      source
+        .replace(/^---[\s\S]*?---\n*/, "")
+        .replace(/<script>[\s\S]*?<\/script>/, "")
+        .replace(/\{\.\.\.Astro\.props\}/g, ""),
+    );
+
+    return {
+      path,
+      name,
+      title,
+      Component: module.default,
+      source,
+      javascriptCode,
+      htmlCode,
+    };
+  })
+  .sort((a, b) => a.name.localeCompare(b.name));
+---
+
+{examples.map(({ title, Component, javascriptCode, htmlCode, source }) => (
+  <section>
+    <h3>{title}</h3>
+    <Tabs>
+      <TabItem label='Demo'>
+        <Component style={demoStyle} />
+      </TabItem>
+      <TabItem label='JavaScript'>
+        <Code code={javascriptCode} lang='js' wrap={false} />
+      </TabItem>
+      <TabItem label='HTML'>
+        <Code code={htmlCode} lang='html' wrap={false} />
+      </TabItem>
+      <TabItem label='Astro File'>
+        <Code code={source} lang='astro' wrap={false} />
+      </TabItem>
+    </Tabs>
+  </section>
+))}

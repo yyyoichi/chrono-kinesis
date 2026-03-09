@@ -17,6 +17,9 @@ importers:
       '@astrojs/starlight':
         specifier: ^0.37.7
         version: 0.37.7(astro@5.18.0(rollup@4.59.0)(typescript@5.9.3))
+      '@yyyoichi/chrono-kinesis':
+        specifier: workspace:*
+        version: link:../../packages/core
       astro:
         specifier: ^5.6.1
         version: 5.18.0(rollup@4.59.0)(typescript@5.9.3)
