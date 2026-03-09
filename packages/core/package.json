@@ -1,5 +1,5 @@
 {
-  "name": "chrono-kinesis",
+  "name": "@yyyoichi/chrono-kinesis",
   "version": "0.1.0",
   "description": "A decoupled, deterministic physics orchestration engine for DOM interactions.",
   "publishConfig": {
