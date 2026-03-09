@@ -8,8 +8,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: read
-      packages: write
     
     steps:
       - uses: actions/checkout@v4
@@ -18,8 +18,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@yyyoichi'
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: pnpm/action-setup@v3
         with:
@@ -33,5 +32,3 @@ jobs:
 
       - name: Publish to GitHub Packages
         run: pnpm --filter chrono-kinesis publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

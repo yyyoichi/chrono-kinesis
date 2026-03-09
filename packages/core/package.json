@@ -1,10 +1,11 @@
 {
-  "name": "@yyyoichi/chrono-kinesis",
+  "name": "chrono-kinesis",
   "version": "0.1.0",
   "description": "A decoupled, deterministic physics orchestration engine for DOM interactions.",
   "publishConfig": {
     "access": "public",
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org/",
+    "provenance": true
   },
   "repository": {
     "type": "git",
