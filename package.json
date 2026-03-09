@@ -1,0 +1,11 @@
+{
+  "name": "chrono-kinesis-project",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {},
+  "license": "MIT",
+  "packageManager": "pnpm@10.31.0",
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.6"
+  }
+}

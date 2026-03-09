@@ -1,0 +1,3 @@
+. $NVM_DIR/nvm.sh
+nvm use --lts
+nvm alias default lts/\*

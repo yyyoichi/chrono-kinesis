@@ -1,0 +1,38 @@
+{
+  "name": "@yyyoichi/chrono-kinesis",
+  "version": "0.1.0",
+  "description": "A decoupled, deterministic physics orchestration engine for DOM interactions.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "lint": "biome lint ./src"
+  },
+  "keywords": [
+    "physics",
+    "animation",
+    "dom",
+    "spring",
+    "kinetics"
+  ],
+  "author": "yyyoichi",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}

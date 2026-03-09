@@ -1,0 +1,38 @@
+{
+	"name": "Chrono-Kinesis Dev Container",
+	"image": "mcr.microsoft.com/devcontainers/base:bullseye",
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {
+			"nodeGypDependencies": true,
+			"installYarnUsingApt": true,
+			"version": "lts",
+			"pnpmVersion": "latest",
+			"nvmVersion": "latest"
+		}
+	},
+	"mounts": [
+		{
+			"type": "volume",
+			"source": "chrono-kinesis-.pnpm-store",
+			"target": "/workspaces/chrono-kinesis/.pnpm-store"
+		}
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"astro-build.astro-vscode",
+				"biomejs.biome",
+				"vitest.explorer"
+			]
+		}
+	},
+	"remoteUser": "vscode",
+	"workspaceFolder": "/workspaces/chrono-kinesis",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/chrono-kinesis,type=bind,consistency=cached",
+	"postCreateCommand": "sh ./.devcontainer/init.sh",
+	"postStartCommand": "sh ./.devcontainer/start.sh && git config --global --add safe.directory ${containerWorkspaceFolder}",
+	"containerEnv": {
+		"ENV": "local"
+	},
+	"forwardPorts": []
+}
