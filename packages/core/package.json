@@ -2,6 +2,14 @@
   "name": "@yyyoichi/chrono-kinesis",
   "version": "0.1.0",
   "description": "A decoupled, deterministic physics orchestration engine for DOM interactions.",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yyyoichi/chrono-kinesis.git"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
