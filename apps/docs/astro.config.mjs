@@ -7,6 +7,9 @@ import { defineConfig } from "astro/config";
 export default defineConfig({
   site: "https://chrono-kinesis.yyyoichi.com",
   trailingSlash: "never",
+  build: {
+    format: "file",
+  },
   integrations: [
     starlight({
       title: "chrono-kinesis",
