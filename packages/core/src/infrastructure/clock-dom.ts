@@ -16,6 +16,7 @@ interface ResizeTriggerPort
 
 type ViewportThresholdOptions = {
   threshold: number;
+  triggerDirection?: "forward" | "backward" | "both";
   // デフォルトでwindowのviewportを利用します。
   viewportSignal: ViewportSignal;
   // windowのリサイズを監視するためのsignal。デフォルトでwindowResizeSignalを利用します。
@@ -28,6 +29,8 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
   private static readonly SENTINEL_HOST_CLASS = "ck-viewport-trigger-host";
   // 監視対象のトリガー位置設定
   private thresholdRatio = 0;
+  // forward: 画面下部を上から下に交差でトリガー、backward: 画面下部を下から上に交差でトリガー、both: どちらの交差でもトリガー
+  private triggerDirection: "forward" | "backward" | "both" = "forward";
   private viewportSignal: ViewportSignal;
   private resizeTrigger: ResizeTriggerPort;
   // resizeTriggerが内部で初期化されたかどうか。
@@ -48,6 +51,9 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
     if (options.threshold !== undefined) {
       this.thresholdRatio = Math.max(0, Math.min(1, options.threshold));
     }
+    if (options.triggerDirection) {
+      this.triggerDirection = options.triggerDirection;
+    }
 
     this.viewportSignal = options.viewportSignal || getDefaultViewportSignal();
     this.resizeTrigger = options.resizeTrigger || getDefaultWindowResizeTriggerClock();
@@ -63,9 +69,12 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
     this.viewportSignal.subscribe(this.target, this.triggerHeartbeat.bind(this));
   }
   // 同じ要素に対してクロックを作成する。
-  public newClock(options: Pick<Partial<ViewportThresholdOptions>, "threshold"> = {}) {
+  public newClock(
+    options: Pick<Partial<ViewportThresholdOptions>, "threshold" | "triggerDirection"> = {},
+  ) {
     return new ViewportTriggerClock(this.host, {
       threshold: options.threshold ?? this.thresholdRatio,
+      triggerDirection: options.triggerDirection ?? this.triggerDirection,
       viewportSignal: this.viewportSignal,
       resizeTrigger: this.resizeTrigger,
     });
@@ -92,9 +101,11 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
   }
 
   // 交差イベントを1tick triggerとして通知する。
-  private triggerHeartbeat() {
-    this.state = 1;
-    this._heartbeat();
+  private triggerHeartbeat(direction?: ViewportCrossDirection) {
+    if (this.triggerDirection === direction || this.triggerDirection === "both") {
+      this.state = 1;
+      this._heartbeat();
+    }
   }
   // thresholdの位置を更新して移動させる。
   private updateThresholdOffset() {
@@ -338,16 +349,23 @@ export function getDefaultResizeSignal() {
   return resizeSignal;
 }
 
+type ViewportCrossDirection = "forward" | "backward";
+type ViewportCrossCallback = (direction: ViewportCrossDirection) => void;
+
 export class ViewportSignal {
   private observer: IntersectionObserver | null = null;
-  private handlers = new Map<Element, () => void>();
+  private handlers = new Map<Element, ViewportCrossCallback>();
+  private initializedTargets = new Set<Element>();
+  private previousTopByTarget = new Map<Element, number>();
   constructor(private options: IntersectionObserverInit = {}) {}
-  public subscribe(target: Element, callback: () => void) {
+  public subscribe(target: Element, callback: ViewportCrossCallback) {
     this.handlers.set(target, callback);
     this.ensureObserver().observe(target);
   }
   public unsubscribe(target: Element) {
     this.handlers.delete(target);
+    this.initializedTargets.delete(target);
+    this.previousTopByTarget.delete(target);
     if (this.observer) {
       this.observer.unobserve(target);
     }
@@ -364,7 +382,28 @@ export class ViewportSignal {
       (entries) => {
         for (const entry of entries) {
           const target = entry.target;
-          this.handlers.get(target)?.();
+          const currentTop = entry.boundingClientRect.top;
+          const rootBottom = entry.rootBounds?.bottom ?? window.innerHeight;
+
+          if (!this.initializedTargets.has(target)) {
+            this.initializedTargets.add(target);
+            this.previousTopByTarget.set(target, currentTop);
+            continue;
+          }
+
+          const previousTop = this.previousTopByTarget.get(target) ?? currentTop;
+          this.previousTopByTarget.set(target, currentTop);
+
+          const direction: ViewportCrossDirection =
+            currentTop < previousTop ? "forward" : "backward";
+
+          const crossedBottomLine =
+            (previousTop > rootBottom && currentTop <= rootBottom) || // 画面下部を上から下に交差で発火
+            (previousTop <= rootBottom && currentTop > rootBottom); // 画面下部を下から上に交差で発火
+          if (!crossedBottomLine) {
+            continue;
+          }
+          this.handlers.get(target)?.(direction);
         }
       },
       // 画面下部と交差で発火
