@@ -231,7 +231,12 @@ export class ElementResizeTriggerClock
     options: Partial<ResizeTriggerClockOptions> = {},
   ) {
     super();
-    this.snapshot();
+    const rect = this.target.getBoundingClientRect();
+    this._snapshot = {
+      trigger: 0,
+      width: rect.width,
+      height: rect.height,
+    };
     this.signal = options.signal || getDefaultResizeSignal();
     this.signal.subscribe(this.target, this.onResize);
   }
