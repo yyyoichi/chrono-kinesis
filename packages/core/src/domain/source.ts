@@ -1,18 +1,16 @@
 import type {
+  GateReadablePort,
   PositionReadablePort,
   ProgressReadablePort,
   SizeReadablePort,
   SnapshotPort,
+  TriggerReadablePort,
   VectorReadablePort,
 } from "./ports";
 
-export class CenteredSource
-  implements PositionReadablePort, VectorReadablePort
-{
+export class CenteredSource implements PositionReadablePort, VectorReadablePort {
   private _snapshot: [number, number] = [0, 0];
-  constructor(
-    private readonly source: SizeReadablePort & PositionReadablePort,
-  ) {
+  constructor(private readonly source: SizeReadablePort & PositionReadablePort) {
     this.snapshot();
   }
   public snapshot() {
@@ -37,9 +35,7 @@ type OffsetPositionSourceOptions = {
   topPx?: number;
 };
 
-export class OffsetPositionSource
-  implements PositionReadablePort, VectorReadablePort
-{
+export class OffsetPositionSource implements PositionReadablePort, VectorReadablePort {
   private readonly leftPx: number;
   private readonly topPx: number;
   private _snapshot: [number, number] = [0, 0];
@@ -64,6 +60,39 @@ export class OffsetPositionSource
   }
   public dependencies(): SnapshotPort[] {
     return [this.source];
+  }
+}
+
+type TriggerGateSourceOptions = {
+  initialGate?: 0 | 1;
+};
+
+export class TriggerGateSource implements GateReadablePort {
+  private _snapshot: 0 | 1;
+
+  constructor(
+    private readonly onTrigger: TriggerReadablePort,
+    private readonly offTrigger: TriggerReadablePort,
+    options: TriggerGateSourceOptions = {},
+  ) {
+    this._snapshot = options.initialGate ?? 0;
+  }
+
+  public snapshot(): void {
+    if (this.onTrigger.trigger === 1 && this._snapshot === 0) {
+      this._snapshot = 1;
+    }
+    if (this.offTrigger.trigger === 1 && this._snapshot === 1) {
+      this._snapshot = 0;
+    }
+  }
+
+  public get gate() {
+    return this._snapshot;
+  }
+
+  public dependencies(): SnapshotPort[] {
+    return [this.onTrigger, this.offTrigger];
   }
 }
 
@@ -134,14 +163,8 @@ export class ArcSource implements VectorReadablePort {
         : progressClamped;
 
     const oneMinusT = 1 - t;
-    const x =
-      oneMinusT * oneMinusT * a[0] +
-      2 * oneMinusT * t * controlX +
-      t * t * b[0];
-    const y =
-      oneMinusT * oneMinusT * a[1] +
-      2 * oneMinusT * t * controlY +
-      t * t * b[1];
+    const x = oneMinusT * oneMinusT * a[0] + 2 * oneMinusT * t * controlX + t * t * b[0];
+    const y = oneMinusT * oneMinusT * a[1] + 2 * oneMinusT * t * controlY + t * t * b[1];
     this._snapshot = [x, y];
   }
   public dependencies(): SnapshotPort[] {
@@ -192,8 +215,7 @@ export class ArcSource implements VectorReadablePort {
       const segStart = cumulative[i - 1];
       const segEnd = cumulative[i];
       const segLength = segEnd - segStart;
-      const local =
-        segLength <= Number.EPSILON ? 0 : (targetLength - segStart) / segLength;
+      const local = segLength <= Number.EPSILON ? 0 : (targetLength - segStart) / segLength;
       return (i - 1 + local) / samples;
     }
 
