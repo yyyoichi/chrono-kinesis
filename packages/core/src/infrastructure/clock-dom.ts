@@ -20,7 +20,7 @@ type ViewportThresholdOptions = {
   // デフォルトでwindowのviewportを利用します。
   viewportSignal: ViewportSignal;
   // windowのリサイズを監視するためのsignal。デフォルトでwindowResizeSignalを利用します。
-  // viewportとしてwindow以外を利用する場合、resizeSignalも指定する必要があります。
+  // viewportとしてwindow以外を利用する場合、resizeSignalも同じViewportのリサイズClockを指定する必要があります。
   resizeTrigger: ResizeTriggerPort;
 };
 
@@ -42,9 +42,19 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
 
   private host: HTMLElement;
   private target: HTMLElement;
-  // Viewport以外の要素枠内での交差を監視する。
+  // Viewport以外の要素枠内での交差を監視する。targetは交差を監視したい要素。
   public static newWithElementViewport(target: HTMLElement, options: ViewportThresholdOptions) {
     return new ViewportTriggerClock(target, options);
+  }
+  // Windowのviewport交差を監視する。targetは交差を監視したい要素。
+  public static newWithWindowViewport(
+    target: HTMLElement,
+    options: Partial<Pick<ViewportThresholdOptions, "threshold" | "triggerDirection">> = {},
+  ) {
+    return new ViewportTriggerClock(target, {
+      threshold: options.threshold ?? 0,
+      triggerDirection: options.triggerDirection ?? "forward",
+    });
   }
   constructor(target: HTMLElement, options: Partial<ViewportThresholdOptions> = {}) {
     super();
@@ -56,7 +66,7 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
     }
 
     this.viewportSignal = options.viewportSignal || getDefaultViewportSignal();
-    this.resizeTrigger = options.resizeTrigger || getDefaultWindowResizeTriggerClock();
+    this.resizeTrigger = options.resizeTrigger || new WindowResizeTriggerClock();
     this.ownResizeTrigger = typeof options.resizeTrigger === "undefined";
 
     // user target > host(relative, class) > sentinel(absolute)
@@ -145,15 +155,6 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
     target.style.height = "1px";
     return target;
   }
-}
-
-let defaultWindowResizeTriggerClock: WindowResizeTriggerClock | null = null;
-
-export function getDefaultWindowResizeTriggerClock() {
-  if (!defaultWindowResizeTriggerClock) {
-    defaultWindowResizeTriggerClock = new WindowResizeTriggerClock();
-  }
-  return defaultWindowResizeTriggerClock;
 }
 
 export class WindowResizeTriggerClock
