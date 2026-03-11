@@ -391,6 +391,11 @@ export class ViewportSignal {
           if (!this.initializedTargets.has(target)) {
             this.initializedTargets.add(target);
             this.previousTopByTarget.set(target, currentTop);
+            // 初期位置がすでにしきい値を超えていた場合はforwardを発火する。
+            // ブラウザバックなどでスクロール位置が復元された場合を想定。
+            if (currentTop <= rootBottom) {
+              this.handlers.get(target)?.("forward");
+            }
             continue;
           }
 
