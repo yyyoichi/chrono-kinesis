@@ -184,6 +184,7 @@ export class WindowResizeTriggerClock
   }
   public snapshot(): void {
     if (this.state.trigger === 0) {
+      this._snapshot.trigger = 0;
       return;
     }
     this._snapshot = this.state;
@@ -253,6 +254,7 @@ export class ElementResizeTriggerClock
   }
   public snapshot(): void {
     if (this.state.trigger === 0) {
+      this._snapshot.trigger = 0;
       return;
     }
     this._snapshot = this.state;
