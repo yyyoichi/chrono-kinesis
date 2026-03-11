@@ -17,7 +17,8 @@ const rawSources = import.meta.glob("./*.astro", {
 const demoStyle =
   "width: 100%; height: 200px; overflow: hidden; position:relative; background-color: var(--ec-frm-edBg); border: var(--ec-brdWd) solid var(--ec-brdCol); border-radius: calc(var(--ec-brdRad) + var(--ec-brdWd));";
 
-const splitPascalCase = (text: string) => text.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+const splitPascalCase = (text: string) =>
+  text.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
 
 const normalizeCode = (code: string) => {
   const normalized = code.replace(/\r\n/g, "\n");
@@ -47,7 +48,9 @@ const examples = Object.entries(modules)
     const name = fileName.replace(".astro", "");
     const source = (rawSources[path] as string | undefined) ?? "";
     const title = module.title?.trim() || splitPascalCase(name);
-    const javascriptCode = normalizeCode(source.match(/<script>([\s\S]*?)<\/script>/)?.[1] ?? "");
+    const javascriptCode = normalizeCode(
+      source.match(/<script>([\s\S]*?)<\/script>/)?.[1] ?? "",
+    );
     const htmlCode = normalizeCode(
       source
         .replace(/^---[\s\S]*?---\n*/, "")
@@ -68,22 +71,24 @@ const examples = Object.entries(modules)
   .sort((a, b) => a.name.localeCompare(b.name));
 ---
 
-{examples.map(({ title, Component, javascriptCode, htmlCode, source }) => (
-  <section>
-    <h3>{title}</h3>
-    <Tabs>
-      <TabItem label='Demo'>
-        <Component style={demoStyle} />
-      </TabItem>
-      <TabItem label='JavaScript'>
-        <Code code={javascriptCode} lang='js' wrap={false} />
-      </TabItem>
-      <TabItem label='HTML'>
-        <Code code={htmlCode} lang='html' wrap={false} />
-      </TabItem>
-      <TabItem label='Astro File'>
-        <Code code={source} lang='astro' wrap={false} />
-      </TabItem>
-    </Tabs>
-  </section>
-))}
+{
+  examples.map(({ title, Component, javascriptCode, htmlCode, source }) => (
+    <section>
+      <h3>{title}</h3>
+      <Tabs>
+        <TabItem label="Demo">
+          <Component style={demoStyle} />
+        </TabItem>
+        <TabItem label="JavaScript">
+          <Code code={javascriptCode} lang="js" wrap={false} />
+        </TabItem>
+        <TabItem label="HTML">
+          <Code code={htmlCode} lang="html" wrap={false} />
+        </TabItem>
+        <TabItem label="Astro File">
+          <Code code={source} lang="astro" wrap={false} />
+        </TabItem>
+      </Tabs>
+    </section>
+  ))
+}

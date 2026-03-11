@@ -1,25 +1,42 @@
 ---
 export const title = "スクロールイベント";
 type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
-const {style, ...props} = Astro.props;
+const { style, ...props } = Astro.props;
 ---
 
 <div id="viewport-root" {...props} style={style + "overflow: auto;"}>
   <div style="height: 500px; width:100%">
-    <span style="position: sticky; top: 0; background-color: var(--sl-color-bg); color: var(--sl-color-text); padding: 0.5rem; font-weight: bold;">
+    <span
+      style="position: sticky; top: 0; background-color: var(--sl-color-bg); color: var(--sl-color-text); padding: 0.5rem; font-weight: bold;"
+    >
       Scroll ME!
     </span>
     <div style="margin-top: 130px; display: block; text-align: center;">
       画面の下部50%にボックスが入ると表示されます。
     </div>
-    <div id="viewport-target-box" style="opacity: 0.1; height: 200px; width:50%; margin: 0 auto; background-color: cadetblue;">
+    <div
+      id="viewport-target-box"
+      style="opacity: 0.1; height: 200px; width:50%; margin: 0 auto; background-color: cadetblue;"
+    >
     </div>
   </div>
 </div>
 
 <script>
-  import {DefaultSimulatorService, DomPhysics, DomVisualizer, ElementResizeTriggerClock, LinearScaledVector, Kinetics, ViewportSignal, ViewportTriggerClock, DomSource, TriggerGateReducer, ClockComposer} from "@yyyoichi/chrono-kinesis"
-  const simulation = new DefaultSimulatorService({tickRate: 0.5});
+  import {
+    DefaultSimulatorService,
+    DomPhysics,
+    DomVisualizer,
+    ElementResizeTriggerClock,
+    LinearScaledVector,
+    Kinetics,
+    ViewportSignal,
+    ViewportTriggerClock,
+    DomSource,
+    TriggerGateReducer,
+    ClockComposer,
+  } from "@yyyoichi/chrono-kinesis";
+  const simulation = new DefaultSimulatorService({ tickRate: 0.5 });
   // 要素が順スクロールで50%に達したらOpacityを1にして、逆スクロールで10%に達したら0にする例です。
 
   const root = document.getElementById("viewport-root")!;
@@ -29,7 +46,7 @@ const {style, ...props} = Astro.props;
   const onClock = new ViewportTriggerClock(box, {
     threshold: 0.5,
     triggerDirection: "forward",
-    viewportSignal: new ViewportSignal({root}),
+    viewportSignal: new ViewportSignal({ root }),
     resizeTrigger: new ElementResizeTriggerClock(root),
   });
   // 逆スクロールで10%に到達したらトリガーします。
@@ -42,9 +59,11 @@ const {style, ...props} = Astro.props;
     // onClockがトリガーされたら1、offClockがトリガーされたら0にします
     new TriggerGateReducer(onClock, offClock),
     // 値を100-1000の範囲にスケーリングします
-    {min: 100, max: 1000},
+    { min: 100, max: 1000 },
   );
-  const vis = new DomVisualizer().noTranslate().opaticy(st => `${Math.round(st.absolute[0])/1000}`);
+  const vis = new DomVisualizer()
+    .noTranslate()
+    .opaticy((st) => `${Math.round(st.absolute[0]) / 1000}`);
   simulation.add({
     clock: new ClockComposer(onClock, offClock),
     target: opacity,

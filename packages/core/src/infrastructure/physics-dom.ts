@@ -18,10 +18,7 @@ export class DomVisualizer {
   ) {}
 
   public add(mapper: StyleRecipeMapper) {
-    return new DomVisualizer(
-      [...this.mappers, mapper],
-      this.useDefaultTranslate,
-    );
+    return new DomVisualizer([...this.mappers, mapper], this.useDefaultTranslate);
   }
 
   public noTranslate() {
