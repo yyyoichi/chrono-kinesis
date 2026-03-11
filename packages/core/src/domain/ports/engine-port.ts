@@ -4,11 +4,5 @@ export type EngineResult = {
 };
 
 export interface EnginePort {
-  compute(
-    dt: number,
-    position: number,
-    velocity: number,
-    target: number,
-    out: EngineResult,
-  ): void;
+  compute(dt: number, position: number, velocity: number, target: number, out: EngineResult): void;
 }

@@ -25,9 +25,7 @@ export class DefaultSimulatorService implements SimulatorService {
   }
 
   public add(context: SimulationContext): void {
-    const isAlreadyAdded = this.contexts.some(
-      ({ target }) => target === context.target,
-    );
+    const isAlreadyAdded = this.contexts.some(({ target }) => target === context.target);
     if (!isAlreadyAdded) {
       context.clock.onHeartbeat(() => setTimeout(this.wake.bind(this), 0));
     }
@@ -95,15 +93,11 @@ export class DefaultSimulatorService implements SimulatorService {
       return;
     }
 
-    const elapsedSec =
-      this.lastFrameTimeMs === 0 ? 0 : (now - this.lastFrameTimeMs) / 1000;
+    const elapsedSec = this.lastFrameTimeMs === 0 ? 0 : (now - this.lastFrameTimeMs) / 1000;
     this.lastFrameTimeMs = now;
 
     // 1. 最大値を制限しつつ蓄積（ラグ対策）
-    this.accumulatedLagSec += Math.min(
-      elapsedSec,
-      DefaultSimulatorService.MAX_FRAME_DELTA_SEC,
-    );
+    this.accumulatedLagSec += Math.min(elapsedSec, DefaultSimulatorService.MAX_FRAME_DELTA_SEC);
 
     // 2. 蓄積された時間が1ステップ分を超えている間、物理を回す
     while (this.accumulatedLagSec >= this.fixedStepSec) {
@@ -145,8 +139,7 @@ export class DefaultSimulatorService implements SimulatorService {
 
   public setTickRate(tickRate: number): void {
     const normalizedTickRate = Math.min(1, Math.max(Number.EPSILON, tickRate));
-    this.fixedStepSec =
-      DefaultSimulatorService.DEFAULT_FIXED_STEP_SEC / normalizedTickRate;
+    this.fixedStepSec = DefaultSimulatorService.DEFAULT_FIXED_STEP_SEC / normalizedTickRate;
   }
 
   // いずれかのkineticsがactiveかどうか

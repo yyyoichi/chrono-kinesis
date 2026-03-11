@@ -141,12 +141,8 @@ export class SpringEngine implements EnginePort {
   }
 
   private setParam(params: Partial<SpringEngineParams>) {
-    this.k = params.settleMs
-      ? this.m * (4.6 / (params.settleMs / 1000)) ** 2
-      : this.k;
-    this.c = params.zeta
-      ? 2 * Math.sqrt(this.k * this.m) * params.zeta
-      : this.c;
+    this.k = params.settleMs ? this.m * (4.6 / (params.settleMs / 1000)) ** 2 : this.k;
+    this.c = params.zeta ? 2 * Math.sqrt(this.k * this.m) * params.zeta : this.c;
   }
 }
 

@@ -8,6 +8,10 @@ export interface ProgressReadablePort extends SnapshotPort {
   readonly progress: number; // 0..1
 }
 
+export interface TriggerReadablePort extends SnapshotPort {
+  readonly trigger: 0 | 1;
+}
+
 export interface ScalarReadablePort extends SnapshotPort {
   readonly scalar: number; // unbounded continuous
 }

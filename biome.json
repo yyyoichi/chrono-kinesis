@@ -12,13 +12,23 @@
 		"enabled": true,
 		"indentStyle": "space",
 		"indentWidth": 2,
-		"lineWidth": 100
+		"lineWidth": 100,
+		"includes": [
+			"./**/src/**/*.ts",
+			"./**/src/**/*.tsx",
+			"!./**/*.astro"
+		]
 	},
 	"linter": {
 		"enabled": true,
 		"rules": {
 			"recommended": true
-		}
+		},
+		"includes": [
+			"./**/src/**/*.ts",
+			"./**/src/**/*.tsx",
+			"!./**/*.astro"
+		]
 	},
 	"javascript": {
 		"formatter": {

@@ -14,13 +14,40 @@ export abstract class BaseClock implements ClockPort {
     this.callbacks.push(cb);
   }
   public isActive(): boolean {
-    return (
-      performance.now() - this._latestHeartbeatTime <
-      BaseClock.ACTIVITY_THRESHOLD
-    );
+    return performance.now() - this._latestHeartbeatTime < BaseClock.ACTIVITY_THRESHOLD;
   }
   public destroy(): void {
     this.callbacks = [];
+  }
+}
+
+export class ClockComposer extends BaseClock {
+  private readonly clocks: ClockPort[];
+
+  constructor(...clocks: ClockPort[]) {
+    super();
+    this.clocks = clocks;
+    for (const clock of this.clocks) {
+      clock.onHeartbeat(() => {
+        this._heartbeat();
+      });
+    }
+  }
+
+  public isActive(): boolean {
+    for (const clock of this.clocks) {
+      if (clock.isActive()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public destroy(): void {
+    for (const clock of this.clocks) {
+      clock.destroy();
+    }
+    super.destroy();
   }
 }
 

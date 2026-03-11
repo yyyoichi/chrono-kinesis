@@ -1,16 +1,8 @@
-import type {
-  PositionReadablePort,
-  SizeReadablePort,
-  VectorReadablePort,
-} from "../domain/ports";
+import type { PositionReadablePort, SizeReadablePort, VectorReadablePort } from "../domain/ports";
 import type { DomPhysicsSource } from "./contracts/dom-physics-source";
 
 export class DomSource
-  implements
-    VectorReadablePort,
-    PositionReadablePort,
-    SizeReadablePort,
-    DomPhysicsSource
+  implements VectorReadablePort, PositionReadablePort, SizeReadablePort, DomPhysicsSource
 {
   private _snapshot: {
     absolute: [number, number];
@@ -24,10 +16,7 @@ export class DomSource
   }
   public snapshot() {
     const rect = this.element.getBoundingClientRect();
-    this._snapshot.absolute = [
-      rect.left + window.scrollX,
-      rect.top + window.scrollY,
-    ];
+    this._snapshot.absolute = [rect.left + window.scrollX, rect.top + window.scrollY];
     this._snapshot.size = [rect.width, rect.height];
     return;
   }
