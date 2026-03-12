@@ -372,8 +372,11 @@ export class PrimaryPointerDownGateClock
     };
     const el = this.subscriptionElement as unknown as {
       releasePointerCapture?: (pointerId: number) => void;
+      hasPointerCapture?: (pointerId: number) => boolean;
     };
-    el.releasePointerCapture?.(e.pointerId);
+    if (el.hasPointerCapture?.(e.pointerId)) {
+      el.releasePointerCapture?.(e.pointerId);
+    }
     this._heartbeat();
   };
   constructor(
