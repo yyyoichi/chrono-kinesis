@@ -46,7 +46,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   const target = new GateConditionalVector(
     downGateClock,
     // ドラッグが開始されればPointerの位置をターゲットとします。
-    // CenteredPositionは、pointerPositionClockの位置をpointerDomの中心にオフセットするために使用します。
+    // pointerPositionClockの位置をpointerDomの中心にオフセットするために使用します。
     new CenterAlignedPosition(pointerPositionClock, pointerSource),
     // ドラッグが開始されていなければ初期位置をターゲットとします。
     new FixedPosition(pointerSource.position()),

@@ -423,8 +423,8 @@ export class PrimaryPointerPositionClock
 {
   private _snapshot: Readonly<[number, number]> = [0, 0];
   private state: {
-    // idle: 非監視、watching: 監視中、recieved: 監視中で座標を受け取った
-    mode: "idle" | "watching" | "recieved";
+    // idle: 非監視、watching: 監視中、received: 監視中で座標を受け取った
+    mode: "idle" | "watching" | "received";
     clientPosition: [number, number]; // クライアント座標(スクロール分はSnapshot枚に取得する)
   } = {
     mode: "idle",
@@ -436,7 +436,7 @@ export class PrimaryPointerPositionClock
   private onPointerMove = (e: PointerEvent) => {
     if (!e.isPrimary) return;
     const { clientX, clientY } = e;
-    this.state.mode = "recieved";
+    this.state.mode = "received";
     this.state.clientPosition = [clientX, clientY];
     this._heartbeat();
   };
@@ -476,7 +476,7 @@ export class PrimaryPointerPositionClock
       this.startListening();
       return;
     }
-    if (this.state.mode === "recieved") {
+    if (this.state.mode === "received") {
       this._snapshot = [
         this.state.clientPosition[0] + window.scrollX,
         this.state.clientPosition[1] + window.scrollY,
