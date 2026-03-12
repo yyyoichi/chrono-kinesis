@@ -92,13 +92,16 @@ export class LinearScaledVector implements VectorReadablePort {
 
 export class CenteredPosition implements PositionReadablePort, VectorReadablePort {
   private _snapshot: [number, number] = [0, 0];
-  constructor(private readonly source: SizeReadablePort & PositionReadablePort) {
+  constructor(
+    private readonly positionSource: PositionReadablePort,
+    private readonly sizeSource: SizeReadablePort,
+  ) {
     this.snapshot();
   }
   public snapshot() {
-    const [x, y] = this.source.position();
-    const [width, height] = this.source.size();
-    this._snapshot = [x + width / 2, y + height / 2];
+    const [x, y] = this.positionSource.position();
+    const [width, height] = this.sizeSource.size();
+    this._snapshot = [x - width / 2, y - height / 2];
     return;
   }
   public position(): Readonly<[number, number]> {
@@ -108,7 +111,21 @@ export class CenteredPosition implements PositionReadablePort, VectorReadablePor
     return this._snapshot;
   }
   public dependencies(): SnapshotPort[] {
-    return [this.source];
+    return [this.positionSource, this.sizeSource];
+  }
+}
+
+export class FixedPosition implements VectorReadablePort, PositionReadablePort {
+  private _snapshot: Readonly<[number, number]> = [0, 0];
+  constructor(position: ReturnType<PositionReadablePort["position"]>) {
+    this._snapshot = [...position];
+  }
+  public snapshot(): void {}
+  public position(): Readonly<[number, number]> {
+    return this._snapshot;
+  }
+  public vector(): Readonly<number[]> {
+    return this._snapshot;
   }
 }
 
@@ -210,6 +227,27 @@ export class TriggerGateReducer implements GateReadablePort {
 
   public dependencies(): SnapshotPort[] {
     return [this.onTrigger, this.offTrigger];
+  }
+}
+
+export class GateConditionalVector implements VectorReadablePort {
+  private _snapshot: Readonly<number[]> = [];
+  constructor(
+    private readonly gate: GateReadablePort,
+    private readonly trueVector: VectorReadablePort,
+    private readonly falseVector: VectorReadablePort,
+  ) {
+    this.snapshot();
+  }
+  public snapshot(): void {
+    const gateValue = this.gate.gate;
+    this._snapshot = gateValue === 1 ? this.trueVector.vector() : this.falseVector.vector();
+  }
+  public vector(): Readonly<number[]> {
+    return this._snapshot;
+  }
+  public dependencies(): SnapshotPort[] {
+    return [this.gate, this.trueVector, this.falseVector];
   }
 }
 
