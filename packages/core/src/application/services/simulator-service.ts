@@ -6,5 +6,5 @@ export interface SimulatorService {
   pause(): void;
   destroy(): void;
   manualStep(delta: number): void;
-  setTickRate(tickRate: number): void;
+  setFixedStepSec(stepSec: number): void;
 }
