@@ -3,7 +3,8 @@ import type { SimulatorService } from "./services/simulator-service";
 import { DefaultFrameSnapshotRegistry } from "./snapshot-registry";
 
 type SimulatorOptions = {
-  tickRate?: number;
+  // 物理演算のステップ時間（秒）。小さすぎるとCPU負荷が高くなり、大きすぎると物理演算が不安定になる可能性がある。デフォルトは1/60秒（約16.67ms）。
+  fixedStepSec?: number;
 };
 
 export class DefaultSimulatorService implements SimulatorService {
@@ -21,7 +22,7 @@ export class DefaultSimulatorService implements SimulatorService {
 
   constructor(options: SimulatorOptions = {}) {
     this.fixedStepSec = DefaultSimulatorService.DEFAULT_FIXED_STEP_SEC;
-    this.setTickRate(options.tickRate ?? 1);
+    this.setFixedStepSec(options.fixedStepSec ?? DefaultSimulatorService.DEFAULT_FIXED_STEP_SEC);
   }
 
   public add(context: SimulationContext): void {
@@ -137,9 +138,11 @@ export class DefaultSimulatorService implements SimulatorService {
     }
   }
 
-  public setTickRate(tickRate: number): void {
-    const normalizedTickRate = Math.min(1, Math.max(Number.EPSILON, tickRate));
-    this.fixedStepSec = DefaultSimulatorService.DEFAULT_FIXED_STEP_SEC / normalizedTickRate;
+  public setFixedStepSec(fixedStepSec: number): void {
+    if (fixedStepSec <= 0 || !Number.isFinite(fixedStepSec)) {
+      throw new Error("fixedStepSec must be a positive finite number.");
+    }
+    this.fixedStepSec = fixedStepSec;
   }
 
   // いずれかのkineticsがactiveかどうか

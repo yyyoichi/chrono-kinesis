@@ -20,7 +20,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     Kinetics,
     MousePositionClock,
   } from "@yyyoichi/chrono-kinesis";
-  const simulation = new DefaultSimulatorService({ tickRate: 0.5 });
+  const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
   const mouse = new MousePositionClock(
     document.getElementById("mouse-hover-box")!,
   );

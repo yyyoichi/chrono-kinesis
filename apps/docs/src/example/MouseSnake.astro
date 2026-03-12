@@ -21,7 +21,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     MousePositionClock,
     SpringEngine,
   } from "@yyyoichi/chrono-kinesis";
-  const simulation = new DefaultSimulatorService({ tickRate: 0.5 });
+  const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
 
   const box = document.getElementById("mouse-snake-box")!;
   const mouse = new MousePositionClock(box);
