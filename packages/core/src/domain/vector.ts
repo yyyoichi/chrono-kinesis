@@ -90,10 +90,11 @@ export class LinearScaledVector implements VectorReadablePort {
   }
 }
 
-export class CenteredPosition implements PositionReadablePort, VectorReadablePort {
+/** 矩形の左上座標と幅高さから、矩形の中心点を返します */
+export class BoxCenterPosition implements PositionReadablePort, VectorReadablePort {
   private _snapshot: [number, number] = [0, 0];
   constructor(
-    private readonly positionSource: PositionReadablePort,
+    private readonly positionSource: PositionReadablePort, // 矩形の左上座標
     private readonly sizeSource: SizeReadablePort,
   ) {
     this.snapshot();
@@ -101,8 +102,34 @@ export class CenteredPosition implements PositionReadablePort, VectorReadablePor
   public snapshot() {
     const [x, y] = this.positionSource.position();
     const [width, height] = this.sizeSource.size();
+    this._snapshot = [x + width / 2, y + height / 2];
+  }
+  public position(): Readonly<[number, number]> {
+    return this._snapshot;
+  }
+  public vector(): Readonly<number[]> {
+    return this._snapshot;
+  }
+  public dependencies(): SnapshotPort[] {
+    return [this.positionSource, this.sizeSource];
+  }
+}
+
+/** 指定した点を中心として、矩形サイズ分オフセットした左上座標を返します。
+ * 要素のポインタ追従や中央配置のターゲット計算に使います。
+ */
+export class CenterAlignedPosition implements PositionReadablePort, VectorReadablePort {
+  private _snapshot: [number, number] = [0, 0];
+  constructor(
+    private readonly positionSource: PositionReadablePort, // 中心に来てほしい点
+    private readonly sizeSource: SizeReadablePort, // 配置する矩形
+  ) {
+    this.snapshot();
+  }
+  public snapshot() {
+    const [x, y] = this.positionSource.position();
+    const [width, height] = this.sizeSource.size();
     this._snapshot = [x - width / 2, y - height / 2];
-    return;
   }
   public position(): Readonly<[number, number]> {
     return this._snapshot;

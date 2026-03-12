@@ -13,7 +13,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 
 <script>
   import {
-    CenteredPosition,
+    CenterAlignedPosition,
     ClockComposer,
     DefaultSimulatorService,
     DomPhysics,
@@ -47,7 +47,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     downGateClock,
     // ドラッグが開始されればPointerの位置をターゲットとします。
     // CenteredPositionは、pointerPositionClockの位置をpointerDomの中心にオフセットするために使用します。
-    new CenteredPosition(pointerPositionClock, pointerSource),
+    new CenterAlignedPosition(pointerPositionClock, pointerSource),
     // ドラッグが開始されていなければ初期位置をターゲットとします。
     new FixedPosition(pointerSource.position()),
   );
