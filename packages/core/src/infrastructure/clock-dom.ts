@@ -7,7 +7,6 @@ import {
   type SizeReadablePort,
   type SnapshotPort,
   type TriggerReadablePort,
-  Vector,
   type VectorReadablePort,
 } from "../domain";
 
