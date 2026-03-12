@@ -370,6 +370,10 @@ export class PrimaryPointerDownGateClock
       gate: 0,
       position: [e.clientX + window.scrollX, e.clientY + window.scrollY],
     };
+    const el = this.subscriptionElement as unknown as {
+      releasePointerCapture?: (pointerId: number) => void;
+    };
+    el.releasePointerCapture?.(e.pointerId);
     this._heartbeat();
   };
   constructor(
@@ -408,9 +412,9 @@ export class PrimaryPointerDownGateClock
 
 type PrimaryPointerPositionClockOption = {
   // gate=1のときにpositionを更新するためのGate。指定しない場合、常にpositionを更新する。
-  gate: GateReadablePort;
+  gate?: GateReadablePort;
   // gate切替時のposition位置。positionはpointermoveイベントで更新されるため、gateが1のときにpositionを更新したいがpointermoveイベントが発生しない場合に利用する。指定しない場合、gate切替時のpositionは更新されない。
-  initPosition: PositionReadablePort;
+  initPosition?: PositionReadablePort;
 };
 
 export class PrimaryPointerPositionClock
@@ -419,18 +423,21 @@ export class PrimaryPointerPositionClock
 {
   private _snapshot: Readonly<[number, number]> = [0, 0];
   private state: {
-    listening: boolean;
-    position: [number, number];
+    // idle: 非監視、watching: 監視中、recieved: 監視中で座標を受け取った
+    mode: "idle" | "watching" | "recieved";
+    clientPosition: [number, number]; // クライアント座標(スクロール分はSnapshot枚に取得する)
   } = {
-    listening: true,
-    position: [0, 0],
+    mode: "idle",
+    clientPosition: [0, 0],
   };
-  private listening: () => boolean = () => true;
+  private shouldListening: () => boolean = () => true;
   private initPosition?: PositionReadablePort;
   private _dependencies: SnapshotPort[] = [];
   private onPointerMove = (e: PointerEvent) => {
+    if (!e.isPrimary) return;
     const { clientX, clientY } = e;
-    this.state.position = [clientX, clientY];
+    this.state.mode = "recieved";
+    this.state.clientPosition = [clientX, clientY];
     this._heartbeat();
   };
   constructor(
@@ -438,48 +445,43 @@ export class PrimaryPointerPositionClock
       HTMLElement,
       "addEventListener" | "removeEventListener"
     > = window,
-    options: Partial<PrimaryPointerPositionClockOption> = {},
+    options: PrimaryPointerPositionClockOption = {},
   ) {
     super();
     if (options.initPosition) {
       this.initPosition = options.initPosition;
-      this.state.position = [...this.initPosition.position()];
       this._dependencies.push(options.initPosition);
     }
     if (options.gate) {
-      this.listening = () => options.gate?.gate === 1;
-      this.state.listening = this.listening();
+      this.shouldListening = () => options.gate?.gate === 1;
       this._dependencies.push(options.gate);
     }
-    if (this.state.listening) {
-      this.startListening();
-    }
+    this.snapshot();
   }
   public destroy() {
     this.stopListening();
   }
   public snapshot() {
-    if (this.state.listening && !this.listening()) {
-      this.state.listening = false;
+    const shouldListening = this.shouldListening();
+    if (this.state.mode !== "idle" && !shouldListening) {
+      this.state.mode = "idle";
       this.stopListening();
       return;
     }
-    if (!this.state.listening && this.listening()) {
-      this.state.listening = true;
-      this.startListening();
-      // 今回は位置が取れない
+    if (this.state.mode === "idle" && shouldListening) {
+      this.state.mode = "watching";
       if (this.initPosition) {
-        this.state.position = [...this.initPosition.position()];
+        this._snapshot = [...this.initPosition.position()];
       }
+      this.startListening();
       return;
     }
-    if (!this.state.listening) {
-      return;
+    if (this.state.mode === "recieved") {
+      this._snapshot = [
+        this.state.clientPosition[0] + window.scrollX,
+        this.state.clientPosition[1] + window.scrollY,
+      ];
     }
-    this._snapshot = [
-      this.state.position[0] + window.scrollX,
-      this.state.position[1] + window.scrollY,
-    ];
   }
   public position() {
     return this._snapshot;
