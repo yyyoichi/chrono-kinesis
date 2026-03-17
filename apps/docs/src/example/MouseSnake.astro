@@ -20,6 +20,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     Kinetics,
     MousePositionClock,
     SpringEngine,
+    type VectorReadablePort,
   } from "@yyyoichi/chrono-kinesis";
   const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
 
@@ -38,7 +39,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     physics: new DomPhysics(pointer, vis),
   });
 
-  let target = pointer;
+  let target: VectorReadablePort = pointer;
   for (let i = 1; i <= 5; i++) {
     const clone = pointer.clone(
       {
@@ -46,14 +47,16 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
       },
       box,
     );
-    const eg = engine.clone({ settleMs: 400 - i * 10 });
+    const node = new Kinetics(clone.position(), {
+      engine: engine.clone({ settleMs: 400 - i * 10 }),
+    });
     simulation.add({
       clock: mouse,
       target: target,
-      kinetics: new Kinetics(clone.position(), { engine: eg }),
+      kinetics: node,
       physics: new DomPhysics(clone, vis),
     });
-    target = clone;
+    target = node;
   }
   simulation.run();
 </script>
