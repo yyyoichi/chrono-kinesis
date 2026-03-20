@@ -136,8 +136,12 @@ export class BoxRelativePosition implements PositionReadablePort, VectorReadable
     private readonly sizeSource: SizeReadablePort,
     options: BoxRelativePositionOptions = {},
   ) {
-    this.xRatio = Math.max(0, Math.min(1, options.x ?? 0.5));
-    this.yRatio = Math.max(0, Math.min(1, options.y ?? 0.5));
+    const rawX = options.x ?? 0.5;
+    const rawY = options.y ?? 0.5;
+    const safeX = Number.isFinite(rawX) ? rawX : 0.5;
+    const safeY = Number.isFinite(rawY) ? rawY : 0.5;
+    this.xRatio = Math.max(0, Math.min(1, safeX));
+    this.yRatio = Math.max(0, Math.min(1, safeY));
     this.snapshot();
   }
 
