@@ -159,76 +159,144 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
   }
 }
 
-type DialogGateClockOptions =
+type DialogGateClockOptions = {
+  // htmlの保証するイベントを無視、HTML属性をnoneに固定しJS制御によるrequestCloseを実行する
+  // manual指定の場合、HTML属性指定JS制御を行わない。デフォルトでnone。
+  // model時のみanyによるdialogエリア外のクリックによるcloseに対応する。
+  closedby?: "any" | "closerequest" | "none" | "manual";
+} & (
   | {
-      type?: "modal" | "modeless";
+      type: "modal" | "modeless";
     }
   | {
-      type?: "popover";
+      // popoverによりtoplayerにmodelessなdialogを表示する。
+      type: "popover";
+      // デフォルトでmanualに指定
       popover?: "manual" | "auto";
-    };
+    }
+);
 
 export class DialogGateClock extends BaseClock implements ClockPort, GateReadablePort {
+  public static defaultOptions: DialogGateClockOptions = {
+    type: "modal",
+    closedby: "none",
+  };
+  // target.open の状態に優先しない。(closedBy manualの場合があるため)
   private state: "open" | "request-close" | "close" = "close";
   private _snapshot: 0 | 1 = 0;
 
   private _show: () => void = () => {};
   private _close: () => void = () => {};
+  private isOpen: () => boolean;
+
+  private _onEscape: null | ((e: KeyboardEvent) => void) = null;
+  private _onBackdropClick: null | ((e: MouseEvent) => void) = null;
   constructor(
     private target: HTMLDialogElement,
-    options: DialogGateClockOptions = {},
+    options: DialogGateClockOptions = DialogGateClock.defaultOptions,
   ) {
     super();
-    if (options.type === "popover" && !("showPopover" in target) && !("hidePopover" in target)) {
+    if (options.type === "popover" && !DialogGateClock.enablePopoverSupport(target)) {
       console.warn("The target dialog does not support popover. Falling back to modal behavior.");
-      options = { type: "modeless" };
+      options = DialogGateClock.defaultOptions;
     }
     switch (options.type) {
+      case "modal":
+        this._show = () => this.target.showModal();
+        this._close = () => this.target.close();
+        this.isOpen = () => this.target.open; // stateより優先する
+        break;
       case "modeless":
         this._show = () => this.target.show();
         this._close = () => this.target.close();
+        this.isOpen = () => this.target.open; // stateより優先する
         break;
       case "popover":
         this._show = () => this.target.showPopover();
         this._close = () => this.target.hidePopover();
-        this.target.popover = options.popover || null;
+        this.target.popover = options.popover || "manual";
+        // this.target.openは常にfalseのためstateを優先する
+        this.isOpen = () => this.state === "open";
+        break;
+    }
+    switch (options.closedby) {
+      case "any":
+        this._onEscape = (e) => this.onEscape(e);
+        this._onBackdropClick = (e) => this.onBackdropClick(e);
+        this.target.setAttribute("closedby", "none");
+        break;
+      case "closerequest":
+        this._onEscape = (e) => this.onEscape(e);
+        this.target.setAttribute("closedby", "none");
+        break;
+      case "manual":
+        // HTML属性指定JS制御を行わない
         break;
       default:
-        this._show = () => this.target.showModal();
-        this._close = () => this.target.close();
-        break;
+        this.target.setAttribute("closedby", "none");
     }
   }
   public open() {
-    if (!this.target.isConnected || this.state === "open") return;
+    if (!this.target.isConnected || this.isOpen()) return;
     this._show();
     this.state = "open";
+    if (this._onEscape) document.addEventListener("keydown", this._onEscape);
+    if (this._onBackdropClick) this.target.addEventListener("click", this._onBackdropClick);
     this._heartbeat();
   }
   // Clockを起動しダイアログを閉じることを要求する
   public requestClose() {
-    if (!this.target.isConnected || this.state !== "open") return;
+    if (!this.target.isConnected || !this.isOpen()) return;
     this.state = "request-close";
     this._heartbeat();
   }
   // Clockを起動せずにDialogを閉じる
   public slientClose() {
-    if (!this.target.isConnected || this.state === "close") return;
+    if (!this.target.isConnected) return;
     this.state = "close";
+    this._removeListeners();
     this._close();
   }
   // Dialogを閉じる
   public close() {
-    if (!this.target.isConnected || this.state === "close") return;
+    if (!this.target.isConnected) return;
     this.state = "close";
+    this._removeListeners();
     this._close();
     this._heartbeat();
+  }
+  public destroy() {
+    this._removeListeners();
   }
   public snapshot() {
     this._snapshot = this.state === "open" ? 1 : 0;
   }
   public get gate() {
     return this._snapshot;
+  }
+  public static enablePopoverSupport(dialog: HTMLDialogElement) {
+    return "showPopover" in dialog && "hidePopover" in dialog;
+  }
+  private _removeListeners() {
+    if (this._onEscape) document.removeEventListener("keydown", this._onEscape);
+    if (this._onBackdropClick) this.target.removeEventListener("click", this._onBackdropClick);
+  }
+  private onEscape(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      this.requestClose();
+    }
+  }
+  private onBackdropClick(e: MouseEvent) {
+    if (e.target !== this.target) return;
+    const rect = this.target.getBoundingClientRect();
+    const isInDialog =
+      rect.top <= e.clientY &&
+      e.clientY <= rect.bottom &&
+      rect.left <= e.clientX &&
+      e.clientX <= rect.right;
+    if (!isInDialog) {
+      this.requestClose();
+    }
   }
 }
 
