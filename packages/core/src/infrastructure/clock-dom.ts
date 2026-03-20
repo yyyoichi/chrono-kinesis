@@ -159,6 +159,47 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
   }
 }
 
+export class DialogGateClock extends BaseClock implements ClockPort, GateReadablePort {
+  private state: "open" | "request-close" | "close" = "close";
+  private _snapshot: 0 | 1 = 0;
+  constructor(private target: HTMLDialogElement) {
+    super();
+  }
+  public open() {
+    if (!this.target.isConnected || this.state === "open") return;
+    this.target.showModal();
+    this.state = "open";
+    this._heartbeat();
+    console.debug("[DialogGateClock] Opened dialog");
+  }
+  // Clockを起動しダイアログを閉じることを要求する
+  public requestClose() {
+    if (!this.target.isConnected || this.state !== "open") return;
+    this.state = "request-close";
+    this._heartbeat();
+  }
+  // Clockを起動せずにDialogを閉じる
+  public slientClose() {
+    if (!this.target.isConnected || this.state === "close") return;
+    this.state = "close";
+    this.target.close();
+  }
+  // Dialogを閉じる
+  public close() {
+    if (!this.target.isConnected || this.state === "close") return;
+    this.target.close();
+    this.state = "close";
+    this._heartbeat();
+  }
+  public snapshot() {
+    this._snapshot = this.state === "open" ? 1 : 0;
+    console.debug(`[DialogGateClock] Snapshot: ${this._snapshot === 1 ? "open" : "close"}`);
+  }
+  public get gate() {
+    return this._snapshot;
+  }
+}
+
 export class WindowResizeTriggerClock
   extends BaseClock
   implements ClockPort, TriggerReadablePort, SizeReadablePort
