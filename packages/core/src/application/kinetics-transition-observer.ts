@@ -28,8 +28,14 @@ export class KineticsTransitionObserver implements SimulationPhaseObserver {
     private readonly kinetics: KineticsPort,
     options: KineticsTransitionObserverOptions = {},
   ) {
-    this.startThreshold = Math.max(0, options.startThreshold ?? 0.5);
-    this.stopThreshold = Math.max(0, options.stopThreshold ?? 0.5);
+    this.startThreshold = Math.max(
+      0,
+      Number.isFinite(options.startThreshold) ? (options.startThreshold as number) : 0.5,
+    );
+    this.stopThreshold = Math.max(
+      0,
+      Number.isFinite(options.stopThreshold) ? (options.stopThreshold as number) : 0.5,
+    );
   }
 
   public notify(phase: SimulationPhase): void {
