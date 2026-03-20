@@ -88,7 +88,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   kineticsObserver.subscribe("stop", () => {
     if (dialogGateClock.gate === 0) {
       // Gateが終了（requestCloseされ0になったあとに）実際を閉じる。
-      dialogGateClock.slientClose();
+      dialogGateClock.silentClose();
     }
   });
   simulation.run();

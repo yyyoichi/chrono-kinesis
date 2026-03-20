@@ -193,7 +193,9 @@ export class DialogGateClock extends BaseClock implements ClockPort, GateReadabl
   ) {
     super();
     if (options.type === "popover" && !DialogGateClock.enablePopoverSupport(target)) {
-      console.warn("The target dialog does not support popover. Falling back to modal behavior.");
+      console.warn(
+        "The target dialog does not support popover. Falling back to modeless behavior.",
+      );
       options = { type: "modeless", closedby: options.closedby };
     }
 
@@ -255,7 +257,7 @@ export class DialogGateClock extends BaseClock implements ClockPort, GateReadabl
     this._heartbeat();
   }
   // Clockを起動せずにDialogを閉じる
-  public slientClose() {
+  public silentClose() {
     if (!this.target.isConnected || this.state === "close") return;
     this.state = "close";
     this._removeListeners();
