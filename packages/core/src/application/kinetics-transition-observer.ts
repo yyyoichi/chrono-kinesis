@@ -1,83 +1,60 @@
 import type { KineticsPort } from "../domain/ports";
-import type { KineticsEventPort } from "./services/simulation-event-port";
+import type {
+  SimulationPhase,
+  SimulationPhaseObserver,
+} from "./services/simulation-phase-observer";
 
-type KineticsTransitionObserverEventType = "start" | "stop";
+type KineticsTransitionEventType = "start" | "stop";
 
-type KineticsTransitionObserverListener = (event: {
-  type: KineticsTransitionObserverEventType;
-}) => void;
+type KineticsTransitionListener = (event: { type: KineticsTransitionEventType }) => void;
 
-export class KineticsTransitionObserver implements KineticsEventPort {
+export class KineticsTransitionObserver implements SimulationPhaseObserver {
   private beforeActive: boolean | null = null;
-  private afterActive: boolean | null = null;
 
-  private readonly listeners: Record<
-    KineticsTransitionObserverEventType,
-    Set<KineticsTransitionObserverListener>
-  > = {
-    start: new Set(),
-    stop: new Set(),
-  };
+  private readonly listeners: Record<KineticsTransitionEventType, Set<KineticsTransitionListener>> =
+    {
+      start: new Set(),
+      stop: new Set(),
+    };
 
-  public previous(kinetics: KineticsPort): void {
-    this.beforeActive = kinetics.isActive();
-  }
+  constructor(private readonly kinetics: KineticsPort) {}
 
-  public current(kinetics: KineticsPort): void {
-    this.afterActive = kinetics.isActive();
-  }
-
-  public commit(): void {
-    const before = this.beforeActive;
-    const after = this.afterActive;
-    if (before === null || after === null) {
-      this.reset();
+  public notify(phase: SimulationPhase): void {
+    if (phase === "snapshotted") {
+      this.beforeActive = this.kinetics.isActive();
       return;
     }
-    if (!before && after) {
-      this.emit("start");
-      this.reset();
-      return;
-    }
-    if (before && !after) {
-      this.emit("stop");
-      this.reset();
-      return;
+    if (phase === "computed") {
+      const before = this.beforeActive;
+      const after = this.kinetics.isActive();
+      if (before === null) return;
+      if (!before && after) {
+        this.emit("start");
+      } else if (before && !after) {
+        this.emit("stop");
+      }
+      this.beforeActive = null;
     }
   }
 
-  public subscribe(
-    type: KineticsTransitionObserverEventType,
-    cb: KineticsTransitionObserverListener,
-  ) {
+  public subscribe(type: KineticsTransitionEventType, cb: KineticsTransitionListener) {
     this.listeners[type].add(cb);
   }
 
-  public unsubscribe(
-    type: KineticsTransitionObserverEventType,
-    cb: KineticsTransitionObserverListener,
-  ) {
+  public unsubscribe(type: KineticsTransitionEventType, cb: KineticsTransitionListener) {
     this.listeners[type].delete(cb);
   }
 
   public destroy(): void {
     this.listeners.start.clear();
     this.listeners.stop.clear();
-    this.reset();
+    this.beforeActive = null;
   }
 
-  private emit(type: KineticsTransitionObserverEventType): void {
-    const event = {
-      type,
-    };
-
+  private emit(type: KineticsTransitionEventType): void {
+    const event = { type };
     for (const cb of this.listeners[type]) {
       cb(event);
     }
-  }
-
-  private reset(): void {
-    this.beforeActive = null;
-    this.afterActive = null;
   }
 }
