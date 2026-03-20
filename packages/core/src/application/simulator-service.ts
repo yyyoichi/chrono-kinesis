@@ -121,11 +121,15 @@ export class DefaultSimulatorService implements SimulatorService {
     this.snapshots.snapshotAll(now);
 
     for (const { clock, kinetics, target, phaseObservers } of this.contexts) {
+      // event コールバック直後にnotifyの処理量によってinactiveになる可能性があるため、
+      // step開始時点のclockの状態を保持する。
+      const clockIsActive = clock.isActive();
+
       if (phaseObservers) {
         for (const o of phaseObservers) o.notify("snapshotted");
       }
 
-      if (!clock.isActive() && !kinetics.isActive()) {
+      if (!clockIsActive && !kinetics.isActive()) {
         continue;
       }
 
