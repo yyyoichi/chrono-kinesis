@@ -3,7 +3,7 @@ export const title = "シートダイアログ";
 type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 ---
 
-<div {...Astro.props} style={`${Astro.props.style} position: interit;`}>
+<div {...Astro.props}>
   <button type="button" id="sheet-dialog-open-button">open</button>
   <dialog id="sheet-dialog">
     <button type="button" id="sheet-dialog-close-button">close</button>
@@ -88,7 +88,6 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   kineticsObserver.subscribe("stop", () => {
     if (dialogGateClock.gate === 0) {
       // Gateが終了（requestCloseされ0になったあとに）実際を閉じる。
-      console.debug("dialog closed");
       dialogGateClock.slientClose();
     }
   });
