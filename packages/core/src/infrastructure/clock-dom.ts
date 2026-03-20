@@ -159,18 +159,51 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
   }
 }
 
+type DialogGateClockOptions =
+  | {
+      type?: "modal" | "modeless";
+    }
+  | {
+      type?: "popover";
+      popover?: "manual" | "auto";
+    };
+
 export class DialogGateClock extends BaseClock implements ClockPort, GateReadablePort {
   private state: "open" | "request-close" | "close" = "close";
   private _snapshot: 0 | 1 = 0;
-  constructor(private target: HTMLDialogElement) {
+
+  private _show: () => void = () => {};
+  private _close: () => void = () => {};
+  constructor(
+    private target: HTMLDialogElement,
+    options: DialogGateClockOptions = {},
+  ) {
     super();
+    if (options.type === "popover" && !("showPopover" in target) && !("hidePopover" in target)) {
+      console.warn("The target dialog does not support popover. Falling back to modal behavior.");
+      options = { type: "modeless" };
+    }
+    switch (options.type) {
+      case "modeless":
+        this._show = () => this.target.show();
+        this._close = () => this.target.close();
+        break;
+      case "popover":
+        this._show = () => this.target.showPopover();
+        this._close = () => this.target.hidePopover();
+        this.target.popover = options.popover || null;
+        break;
+      default:
+        this._show = () => this.target.showModal();
+        this._close = () => this.target.close();
+        break;
+    }
   }
   public open() {
     if (!this.target.isConnected || this.state === "open") return;
-    this.target.showModal();
+    this._show();
     this.state = "open";
     this._heartbeat();
-    console.debug("[DialogGateClock] Opened dialog");
   }
   // Clockを起動しダイアログを閉じることを要求する
   public requestClose() {
@@ -182,18 +215,17 @@ export class DialogGateClock extends BaseClock implements ClockPort, GateReadabl
   public slientClose() {
     if (!this.target.isConnected || this.state === "close") return;
     this.state = "close";
-    this.target.close();
+    this._close();
   }
   // Dialogを閉じる
   public close() {
     if (!this.target.isConnected || this.state === "close") return;
-    this.target.close();
     this.state = "close";
+    this._close();
     this._heartbeat();
   }
   public snapshot() {
     this._snapshot = this.state === "open" ? 1 : 0;
-    console.debug(`[DialogGateClock] Snapshot: ${this._snapshot === 1 ? "open" : "close"}`);
   }
   public get gate() {
     return this._snapshot;
