@@ -159,70 +159,70 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
   }
 }
 
-type DialogGateClockOptions = {
-  // htmlの保証するイベントを無視、HTML属性をnoneに固定しJS制御によるrequestCloseを実行する
-  // manual指定の場合、HTML属性指定JS制御を行わない。デフォルトでnone。
-  // model時のみanyによるdialogエリア外のクリックによるcloseに対応する。
-  closedby?: "any" | "closerequest" | "none" | "manual";
-} & (
+type DialogGateClockOptions =
   | {
-      type: "modal" | "modeless";
+      type?: "modal";
+      closedby?: "any" | "closerequest" | "none" | "manual";
+    }
+  | {
+      type?: "modeless";
+      closedby?: "closerequest" | "none" | "manual";
     }
   | {
       // popoverによりtoplayerにmodelessなdialogを表示する。
-      type: "popover";
-      // デフォルトでmanualに指定
-      popover?: "manual" | "auto";
-    }
-);
+      type?: "popover";
+      closedby?: "closerequest" | "none" | "manual";
+    };
 
 export class DialogGateClock extends BaseClock implements ClockPort, GateReadablePort {
-  public static defaultOptions: DialogGateClockOptions = {
-    type: "modal",
-    closedby: "none",
-  };
-  // target.open の状態に優先しない。(closedBy manualの場合があるため)
   private state: "open" | "request-close" | "close" = "close";
   private _snapshot: 0 | 1 = 0;
 
   private _show: () => void = () => {};
   private _close: () => void = () => {};
-  private isOpen: () => boolean;
 
   private _onEscape: null | ((e: KeyboardEvent) => void) = null;
   private _onBackdropClick: null | ((e: MouseEvent) => void) = null;
+  private _onNativeClose: null | (() => void) = null;
   constructor(
     private target: HTMLDialogElement,
-    options: DialogGateClockOptions = DialogGateClock.defaultOptions,
+    // type: 未指定の場合、modal
+    // htmlの保証するイベントを無視、HTML属性をnoneに固定しJS制御によるrequestCloseを実行する
+    // manual指定の場合、HTML属性指定JS制御を行わない。デフォルトで none。
+    options: DialogGateClockOptions = {},
   ) {
     super();
     if (options.type === "popover" && !DialogGateClock.enablePopoverSupport(target)) {
       console.warn("The target dialog does not support popover. Falling back to modal behavior.");
-      options = DialogGateClock.defaultOptions;
+      options = { type: "modeless", closedby: options.closedby };
     }
+
     switch (options.type) {
       case "modal":
         this._show = () => this.target.showModal();
         this._close = () => this.target.close();
-        this.isOpen = () => this.target.open; // stateより優先する
         break;
       case "modeless":
         this._show = () => this.target.show();
         this._close = () => this.target.close();
-        this.isOpen = () => this.target.open; // stateより優先する
         break;
       case "popover":
         this._show = () => this.target.showPopover();
         this._close = () => this.target.hidePopover();
-        this.target.popover = options.popover || "manual";
-        // this.target.openは常にfalseのためstateを優先する
-        this.isOpen = () => this.state === "open";
+        // autoの場合、close を拾いきれないため、manual固定。
+        this.target.popover = "manual";
         break;
+      default:
+        this._show = () => this.target.showModal();
+        this._close = () => this.target.close();
     }
     switch (options.closedby) {
       case "any":
         this._onEscape = (e) => this.onEscape(e);
         this._onBackdropClick = (e) => this.onBackdropClick(e);
+        this.target.setAttribute("closedby", "none");
+        break;
+      case "none":
         this.target.setAttribute("closedby", "none");
         break;
       case "closerequest":
@@ -231,35 +231,39 @@ export class DialogGateClock extends BaseClock implements ClockPort, GateReadabl
         break;
       case "manual":
         // HTML属性指定JS制御を行わない
+        // stateの内部状態が実態とずれ、再openが不可能になるため、
+        // dialogのcloseイベントを監視する
+        this._onNativeClose = () => this.close();
         break;
       default:
         this.target.setAttribute("closedby", "none");
     }
   }
   public open() {
-    if (!this.target.isConnected || this.isOpen()) return;
+    if (!this.target.isConnected || this.state === "open") return;
     this._show();
     this.state = "open";
     if (this._onEscape) document.addEventListener("keydown", this._onEscape);
     if (this._onBackdropClick) this.target.addEventListener("click", this._onBackdropClick);
+    if (this._onNativeClose) this.target.addEventListener("close", this._onNativeClose);
     this._heartbeat();
   }
   // Clockを起動しダイアログを閉じることを要求する
   public requestClose() {
-    if (!this.target.isConnected || !this.isOpen()) return;
+    if (!this.target.isConnected || this.state !== "open") return;
     this.state = "request-close";
     this._heartbeat();
   }
   // Clockを起動せずにDialogを閉じる
   public slientClose() {
-    if (!this.target.isConnected) return;
+    if (!this.target.isConnected || this.state === "close") return;
     this.state = "close";
     this._removeListeners();
     this._close();
   }
   // Dialogを閉じる
   public close() {
-    if (!this.target.isConnected) return;
+    if (!this.target.isConnected || this.state === "close") return;
     this.state = "close";
     this._removeListeners();
     this._close();
