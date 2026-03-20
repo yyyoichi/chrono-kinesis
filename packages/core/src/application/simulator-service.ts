@@ -76,11 +76,12 @@ export class DefaultSimulatorService implements SimulatorService {
 
   public destroy(): void {
     this.pause();
-    for (const { clock, disposables } of this.contexts) {
+    for (const { clock, disposables, kineticsEvent } of this.contexts) {
       clock.destroy();
       for (const d of disposables || []) {
         d.destroy();
       }
+      kineticsEvent?.destroy();
     }
     this.contexts = [];
   }
@@ -117,11 +118,17 @@ export class DefaultSimulatorService implements SimulatorService {
   private applyStep(delta: number, now: number): void {
     this.snapshots.snapshotAll(now);
 
-    for (const { clock, kinetics, target } of this.contexts) {
-      if (!clock.isActive() && !kinetics.isActive()) {
+    for (const { clock, kinetics, target, kineticsEvent } of this.contexts) {
+      const previousActive = kinetics.isActive();
+      kineticsEvent?.previous(kinetics);
+
+      if (!clock.isActive() && !previousActive) {
+        kineticsEvent?.current(kinetics);
         continue;
       }
+
       kinetics.compute(delta, target.vector());
+      kineticsEvent?.current(kinetics);
     }
 
     for (const { kinetics, physics } of this.contexts) {
@@ -135,6 +142,10 @@ export class DefaultSimulatorService implements SimulatorService {
         continue;
       }
       physics.apply(kinetics.state);
+    }
+
+    for (const { kineticsEvent } of this.contexts) {
+      kineticsEvent?.commit();
     }
   }
 
