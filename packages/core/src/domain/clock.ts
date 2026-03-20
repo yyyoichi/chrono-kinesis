@@ -1,7 +1,8 @@
 import type { ClockPort } from "./ports";
 
 export abstract class BaseClock implements ClockPort {
-  private static readonly ACTIVITY_THRESHOLD = 100;
+  // TODO: Clock開始直後にsimulatorから呼ばれるまでにinactiveになる可能性が残るため長めに設定。初回Clock時に確実に実行する機構が必要。
+  private static readonly ACTIVITY_THRESHOLD = 300;
   private _latestHeartbeatTime: number = 0;
   private callbacks: Array<() => void> = [];
   protected _heartbeat: () => void = () => {

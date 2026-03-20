@@ -15,7 +15,7 @@ const rawSources = import.meta.glob("./*.astro", {
 });
 
 const demoStyle =
-  "width: 100%; height: 200px; overflow: hidden; position:relative; background-color: var(--ec-frm-edBg); border: var(--ec-brdWd) solid var(--ec-brdCol); border-radius: calc(var(--ec-brdRad) + var(--ec-brdWd));";
+  "width: 100%; height: 200px; overflow: hidden; background-color: var(--ec-frm-edBg); border: var(--ec-brdWd) solid var(--ec-brdCol); border-radius: calc(var(--ec-brdRad) + var(--ec-brdWd));";
 
 const splitPascalCase = (text: string) =>
   text.replace(/([a-z0-9])([A-Z])/g, "$1 $2");

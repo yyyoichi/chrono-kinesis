@@ -1,0 +1,101 @@
+---
+export const title = "シートダイアログ";
+type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
+---
+
+<div {...Astro.props}>
+  <button type="button" id="sheet-dialog-open-button">open</button>
+  <dialog id="sheet-dialog">
+    <button type="button" id="sheet-dialog-close-button">close</button>
+  </dialog>
+</div>
+
+<style>
+  #sheet-dialog {
+    top: 0;
+    left: 100vw;
+    width: 300px;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: none;
+    overflow: hidden;
+    background-color: cadetblue;
+  }
+  #sheet-dialog::backdrop {
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+</style>
+
+<script>
+  import {
+    DefaultSimulatorService,
+    DialogGateClock,
+    DomPhysics,
+    DomSource,
+    DomVisualizer,
+    FixedPosition,
+    GateConditionalVector,
+    Kinetics,
+    KineticsTransitionObserver,
+    OffsetPosition,
+    SpringEngine,
+  } from "@yyyoichi/chrono-kinesis";
+  const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
+
+  const dialogEl = document.getElementById(
+    "sheet-dialog",
+  )! as HTMLDialogElement;
+  const dialogGateClock = new DialogGateClock(dialogEl, {
+    type: "modal",
+    closedby: "any",
+  });
+  const dialogSrc = new DomSource(dialogEl);
+
+  // 初期値は画面外。Open(gate=1)で、画面内に移動。
+  const closedPosition = new FixedPosition(dialogSrc.position());
+  const target = new GateConditionalVector(
+    dialogGateClock,
+    new OffsetPosition(closedPosition, { leftPx: -300 }),
+    closedPosition,
+  );
+  const kinetics = new Kinetics(dialogSrc.position(), {
+    engine: new SpringEngine({ settleMs: 400, zeta: 0.7 }),
+  });
+  const kineticsObserver = new KineticsTransitionObserver(kinetics, {
+    stopThreshold: 80,
+  });
+
+  simulation.add({
+    clock: dialogGateClock,
+    target: target,
+    kinetics: kinetics,
+    physics: new DomPhysics(dialogSrc, new DomVisualizer()),
+    phaseObservers: [kineticsObserver],
+  });
+
+  // add Event
+
+  const openEvent = () => dialogGateClock.open();
+  // 直接close()しない点に注意。requestClose()は状態のみCloseする。
+  const closeEvent = () => dialogGateClock.requestClose();
+  const openButton = document.getElementById("sheet-dialog-open-button")!;
+  const closeButton = document.getElementById("sheet-dialog-close-button")!;
+  openButton.addEventListener("click", openEvent);
+  closeButton.addEventListener("click", closeEvent);
+  kineticsObserver.subscribe("stop", () => {
+    if (dialogGateClock.gate === 0) {
+      // Gateが終了（requestCloseされ0になったあとに）実際を閉じる。
+      dialogGateClock.silentClose();
+    }
+  });
+  simulation.run();
+
+  window.addEventListener("beforeunload", () => {
+    openButton.removeEventListener("click", openEvent);
+    closeButton.removeEventListener("click", closeEvent);
+    simulation.destroy();
+  });
+</script>

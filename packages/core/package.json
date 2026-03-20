@@ -1,6 +1,6 @@
 {
   "name": "@yyyoichi/chrono-kinesis",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A decoupled, deterministic physics orchestration engine for DOM interactions.",
   "publishConfig": {
     "access": "public",
