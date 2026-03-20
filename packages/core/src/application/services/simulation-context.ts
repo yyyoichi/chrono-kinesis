@@ -5,12 +5,16 @@ import type {
   PhysicsPort,
   VectorReadablePort,
 } from "../../domain/ports";
+import type { SimulationPhaseObserver } from "./simulation-phase-observer";
 
 export type SimulationContext = {
   clock: ClockPort;
   kinetics: KineticsPort;
   target: VectorReadablePort;
   physics: PhysicsPort | PhysicsPort[];
-  // simulation終了時にdestoryされるべきインスタンス。Clockはauto disposeされるため、ここに含める必ずしも必要ではない。
+  phaseObservers?: SimulationPhaseObserver[];
+  // simulation終了時にDefaultSimulatorService.destroy()によってdestroyされるべきインスタンス群。
+  // phaseObserversに含めたインスタンスはここ(disposables)に重複して含めないこと（同じインスタンスを両方に入れるとdestroy()が二重に呼ばれる可能性がある）。
+  // Clockはauto disposeされるため、ここに含める必要は必ずしもない。
   disposables?: DisposablePort[];
 };
