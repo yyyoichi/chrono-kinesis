@@ -92,24 +92,73 @@ export class LinearScaledVector implements VectorReadablePort {
 
 /** 矩形の左上座標と幅高さから、矩形の中心点を返します */
 export class BoxCenterPosition implements PositionReadablePort, VectorReadablePort {
-  private _snapshot: [number, number] = [0, 0];
+  private readonly source: BoxRelativePosition;
   constructor(
     private readonly positionSource: PositionReadablePort, // 矩形の左上座標
     private readonly sizeSource: SizeReadablePort,
   ) {
+    this.source = new BoxRelativePosition(this.positionSource, this.sizeSource, {
+      x: 0.5,
+      y: 0.5,
+    });
+  }
+  public snapshot() {
+    this.source.snapshot();
+  }
+  public position(): Readonly<[number, number]> {
+    return this.source.position();
+  }
+  public vector(): Readonly<number[]> {
+    return this.source.vector();
+  }
+  public dependencies(): SnapshotPort[] {
+    return this.source.dependencies();
+  }
+}
+
+type BoxRelativePositionOptions = {
+  /** x方向の位置（rate）。0=左端, 0.5=中央, 1.0=右端。デフォルトは0.5。 */
+  x?: number;
+  /** y方向の位置（rate）。0=上端, 0.5=中央, 1.0=下端。デフォルトは0.5。 */
+  y?: number;
+};
+
+/** 矩形の左上座標と幅高さから、任意の相対位置（rate: 0〜1）を返します。
+ * x=0.5, y=0.5 で BoxCenterPosition と等価になります。
+ */
+export class BoxRelativePosition implements PositionReadablePort, VectorReadablePort {
+  private _snapshot: [number, number] = [0, 0];
+  private readonly xRatio: number;
+  private readonly yRatio: number;
+
+  constructor(
+    private readonly positionSource: PositionReadablePort,
+    private readonly sizeSource: SizeReadablePort,
+    options: BoxRelativePositionOptions = {},
+  ) {
+    const rawX = options.x ?? 0.5;
+    const rawY = options.y ?? 0.5;
+    const safeX = Number.isFinite(rawX) ? rawX : 0.5;
+    const safeY = Number.isFinite(rawY) ? rawY : 0.5;
+    this.xRatio = Math.max(0, Math.min(1, safeX));
+    this.yRatio = Math.max(0, Math.min(1, safeY));
     this.snapshot();
   }
+
   public snapshot() {
     const [x, y] = this.positionSource.position();
     const [width, height] = this.sizeSource.size();
-    this._snapshot = [x + width / 2, y + height / 2];
+    this._snapshot = [x + width * this.xRatio, y + height * this.yRatio];
   }
+
   public position(): Readonly<[number, number]> {
     return this._snapshot;
   }
+
   public vector(): Readonly<number[]> {
     return this._snapshot;
   }
+
   public dependencies(): SnapshotPort[] {
     return [this.positionSource, this.sizeSource];
   }
