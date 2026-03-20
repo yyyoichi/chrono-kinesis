@@ -235,7 +235,12 @@ export class DialogGateClock extends BaseClock implements ClockPort, GateReadabl
         // HTML属性指定JS制御を行わない
         // stateの内部状態が実態とずれ、再openが不可能になるため、
         // dialogのcloseイベントを監視する
-        this._onNativeClose = () => this.close();
+        this._onNativeClose = () => {
+          if (this.state === "close") return;
+          this.state = "close";
+          this._removeListeners();
+          this._heartbeat();
+        };
         break;
       default:
         this.target.setAttribute("closedby", "none");
@@ -286,6 +291,7 @@ export class DialogGateClock extends BaseClock implements ClockPort, GateReadabl
   private _removeListeners() {
     if (this._onEscape) document.removeEventListener("keydown", this._onEscape);
     if (this._onBackdropClick) this.target.removeEventListener("click", this._onBackdropClick);
+    if (this._onNativeClose) this.target.removeEventListener("close", this._onNativeClose);
   }
   private onEscape(e: KeyboardEvent) {
     if (e.key === "Escape") {
