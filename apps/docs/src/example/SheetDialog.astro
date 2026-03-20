@@ -3,21 +3,29 @@ export const title = "シートダイアログ";
 type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 ---
 
-<div {...Astro.props}>
+<div {...Astro.props} style={`${Astro.props.style} position: interit;`}>
   <button type="button" id="sheet-dialog-open-button">open</button>
-  <dialog
-    id="sheet-dialog"
-    closedby="closerequest"
-    style="width: 300px; margin-left: 100dvw; height: 100dvh; max-height: 100dvh; margin-top: 0; padding: 0; border: none; overflow: hidden; background-color: cadetblue;"
-  >
+  <dialog id="sheet-dialog">
     <button type="button" id="sheet-dialog-close-button">close</button>
   </dialog>
 </div>
 
 <style>
+  #sheet-dialog {
+    top: 0;
+    left: 100vw;
+    width: 300px;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: none;
+    overflow: hidden;
+    background-color: cadetblue;
+  }
   #sheet-dialog::backdrop {
     backdrop-filter: blur(2px);
-    background-color: transparent;
+    -webkit-backdrop-filter: blur(2px);
   }
 </style>
 
@@ -40,7 +48,10 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   const dialogEl = document.getElementById(
     "sheet-dialog",
   )! as HTMLDialogElement;
-  const dialogGateClock = new DialogGateClock(dialogEl);
+  const dialogGateClock = new DialogGateClock(dialogEl, {
+    type: "modal",
+    closedby: "any",
+  });
   const dialogSrc = new DomSource(dialogEl);
 
   // 初期値は画面外。Open(gate=1)で、画面内に移動。
@@ -53,7 +64,9 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   const kinetics = new Kinetics(dialogSrc.position(), {
     engine: new SpringEngine({ settleMs: 400, zeta: 0.7 }),
   });
-  const kineticsObserver = new KineticsTransitionObserver(kinetics);
+  const kineticsObserver = new KineticsTransitionObserver(kinetics, {
+    stopThreshold: 80,
+  });
 
   simulation.add({
     clock: dialogGateClock,
