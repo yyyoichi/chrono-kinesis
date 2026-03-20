@@ -8,8 +8,15 @@ type KineticsTransitionEventType = "start" | "stop";
 
 type KineticsTransitionListener = (event: { type: KineticsTransitionEventType }) => void;
 
+type KineticsTransitionObserverOptions = {
+  startThreshold?: number;
+  stopThreshold?: number;
+};
+
 export class KineticsTransitionObserver implements SimulationPhaseObserver {
-  private beforeActive: boolean | null = null;
+  private beforeScore: number | null = null;
+  private readonly startThreshold: number;
+  private readonly stopThreshold: number;
 
   private readonly listeners: Record<KineticsTransitionEventType, Set<KineticsTransitionListener>> =
     {
@@ -17,23 +24,29 @@ export class KineticsTransitionObserver implements SimulationPhaseObserver {
       stop: new Set(),
     };
 
-  constructor(private readonly kinetics: KineticsPort) {}
+  constructor(
+    private readonly kinetics: KineticsPort,
+    options: KineticsTransitionObserverOptions = {},
+  ) {
+    this.startThreshold = Math.max(0, options.startThreshold ?? 0.5);
+    this.stopThreshold = Math.max(0, options.stopThreshold ?? 0.5);
+  }
 
   public notify(phase: SimulationPhase): void {
     if (phase === "snapshotted") {
-      this.beforeActive = this.kinetics.isActive();
+      this.beforeScore = this.kinetics.activityScore;
       return;
     }
     if (phase === "computed") {
-      const before = this.beforeActive;
-      const after = this.kinetics.isActive();
+      const before = this.beforeScore;
+      const after = this.kinetics.activityScore;
       if (before === null) return;
-      if (!before && after) {
+      if (before < this.startThreshold && after >= this.startThreshold) {
         this.emit("start");
-      } else if (before && !after) {
+      } else if (before >= this.stopThreshold && after < this.stopThreshold) {
         this.emit("stop");
       }
-      this.beforeActive = null;
+      this.beforeScore = null;
     }
   }
 
@@ -48,7 +61,7 @@ export class KineticsTransitionObserver implements SimulationPhaseObserver {
   public destroy(): void {
     this.listeners.start.clear();
     this.listeners.stop.clear();
-    this.beforeActive = null;
+    this.beforeScore = null;
   }
 
   private emit(type: KineticsTransitionEventType): void {
