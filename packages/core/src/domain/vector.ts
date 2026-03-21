@@ -100,13 +100,18 @@ function resolveRatio(
   raw: number | RatioReadablePort | undefined,
   fallback = 0.5,
 ): { getter: () => number; port: RatioReadablePort | null } {
-  if (raw !== undefined && typeof raw === "object") {
+  if (raw && typeof raw === "object") {
     return { getter: () => raw.ratio, port: raw };
   }
-  const num = typeof raw === "number" ? raw : fallback;
-  const safe = Number.isFinite(num) ? num : fallback;
-  const clamped = Math.max(0, Math.min(1, safe));
-  return { getter: () => clamped, port: null };
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    const clamped = Math.max(0, Math.min(1, raw));
+    return { getter: () => clamped, port: null };
+  }
+  if (Number.isFinite(fallback)) {
+    const clamped = Math.max(0, Math.min(1, fallback));
+    return { getter: () => clamped, port: null };
+  }
+  return { getter: () => 0, port: null };
 }
 
 export class ScalarAdapter implements ScalarReadablePort {
