@@ -355,7 +355,7 @@ export class WindowResizeTriggerClock
   public destroy(): void {
     windowResizeSignal.unsubscribe(this.onResize);
   }
-  private onResize = (w: WindowProxy) => {
+  private onResize = (w: Window) => {
     this.state = {
       trigger: 1,
       width: w.innerWidth,
@@ -754,22 +754,22 @@ export class ViewportSignal {
 }
 
 class WindowResizeSignal {
-  private handlers = new Set<(w: WindowProxy) => void>();
-  public subscribe(callback: (w: WindowProxy) => void) {
+  private handlers = new Set<(w: Window) => void>();
+  public subscribe(callback: (w: Window) => void) {
     if (this.handlers.size === 0) {
       window.addEventListener("resize", this.onResize, { passive: true });
     }
     this.handlers.add(callback);
   }
-  public unsubscribe(callback: (w: WindowProxy) => void) {
+  public unsubscribe(callback: (w: Window) => void) {
     this.handlers.delete(callback);
     if (this.handlers.size === 0) {
       window.removeEventListener("resize", this.onResize);
     }
   }
-  private onResize = (ev: UIEvent) => {
+  private onResize = (_ev: UIEvent) => {
     for (const handler of this.handlers) {
-      handler(ev.view as WindowProxy);
+      handler(window);
     }
   };
 }
