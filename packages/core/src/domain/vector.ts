@@ -183,7 +183,7 @@ export class ScalarThresholdRatio implements RatioReadablePort {
     private readonly source: ScalarReadablePort,
     options: ScalarThresholdRatioOptions,
   ) {
-    this.thresholds = options.thresholds;
+    this.thresholds = [...options.thresholds];
     this.ratios = options.ratios.map((x) => {
       const safe = Number.isFinite(x) ? x : 0;
       return Math.max(0, Math.min(1, safe));
