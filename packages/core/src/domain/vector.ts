@@ -376,27 +376,50 @@ export class FixedPosition implements VectorReadablePort, PositionReadablePort {
 }
 
 type OffsetPositionOptions = {
-  leftPx?: number;
-  topPx?: number;
+  /** 左方向オフセット(px)。固定値 or ScalarReadablePort。 */
+  leftPx?: number | ScalarReadablePort;
+  /** 上方向オフセット(px)。固定値 or ScalarReadablePort。 */
+  topPx?: number | ScalarReadablePort;
 };
 
+function resolveScalar(
+  raw: number | ScalarReadablePort | undefined,
+  fallback = 0,
+): { getter: () => number; port: ScalarReadablePort | null } {
+  if (raw && typeof raw === "object") {
+    return { getter: () => raw.scalar, port: raw };
+  }
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return { getter: () => raw, port: null };
+  }
+  if (Number.isFinite(fallback)) {
+    return { getter: () => fallback, port: null };
+  }
+  return { getter: () => 0, port: null };
+}
+
 export class OffsetPosition implements PositionReadablePort, VectorReadablePort {
-  private readonly leftPx: number;
-  private readonly topPx: number;
+  private readonly getLeftPx: () => number;
+  private readonly getTopPx: () => number;
+  private readonly _dependencies: SnapshotPort[];
   private _snapshot: [number, number] = [0, 0];
 
   constructor(
     private readonly source: PositionReadablePort,
     options: OffsetPositionOptions = {},
   ) {
-    this.leftPx = options.leftPx ?? 0;
-    this.topPx = options.topPx ?? 0;
+    const { getter: getLeftPx, port: leftPort } = resolveScalar(options.leftPx);
+    const { getter: getTopPx, port: topPort } = resolveScalar(options.topPx);
+    this.getLeftPx = getLeftPx;
+    this.getTopPx = getTopPx;
+    const scalarPort = [leftPort, topPort].filter((p): p is ScalarReadablePort => p !== null);
+    this._dependencies = [this.source, ...scalarPort];
     this.snapshot();
   }
 
   public snapshot(): void {
     const [x, y] = this.source.position();
-    this._snapshot = [x + this.leftPx, y + this.topPx];
+    this._snapshot = [x + this.getLeftPx(), y + this.getTopPx()];
   }
   public position(): Readonly<[number, number]> {
     return this._snapshot;
@@ -405,7 +428,7 @@ export class OffsetPosition implements PositionReadablePort, VectorReadablePort 
     return this._snapshot;
   }
   public dependencies(): SnapshotPort[] {
-    return [this.source];
+    return this._dependencies;
   }
 }
 
