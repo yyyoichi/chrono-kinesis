@@ -35,7 +35,11 @@ export class VectorComposer implements VectorReadablePort {
 export class VectorAdapter implements VectorReadablePort {
   private value: () => number[];
   constructor(
-    private source: GateReadablePort | ProgressReadablePort | TriggerReadablePort | ScalarAdapter,
+    private source:
+      | GateReadablePort
+      | ProgressReadablePort
+      | TriggerReadablePort
+      | ScalarReadablePort,
   ) {
     this.value =
       "gate" in source
