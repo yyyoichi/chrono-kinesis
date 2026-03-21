@@ -34,13 +34,17 @@ export class VectorComposer implements VectorReadablePort {
 
 export class VectorAdapter implements VectorReadablePort {
   private value: () => number[];
-  constructor(private source: GateReadablePort | ProgressReadablePort | TriggerReadablePort) {
+  constructor(
+    private source: GateReadablePort | ProgressReadablePort | TriggerReadablePort | ScalarAdapter,
+  ) {
     this.value =
       "gate" in source
         ? () => [source.gate]
         : "progress" in source
           ? () => [source.progress]
-          : () => [source.trigger];
+          : "trigger" in source
+            ? () => [source.trigger]
+            : () => [source.scalar];
   }
   public snapshot(): void {}
   public vector(): Readonly<number[]> {
