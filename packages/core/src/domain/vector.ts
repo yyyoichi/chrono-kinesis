@@ -117,6 +117,7 @@ function resolveRatio(
 export class ScalarAdapter implements ScalarReadablePort {
   private _snapshot = 0;
   private readonly value: () => number;
+  private readonly _dependencies: SnapshotPort[];
 
   public static fromSizeW(source: SizeReadablePort): ScalarAdapter {
     return new ScalarAdapter(source, "w");
@@ -135,7 +136,7 @@ export class ScalarAdapter implements ScalarReadablePort {
   }
 
   private constructor(
-    private readonly source: SizeReadablePort | PositionReadablePort,
+    source: SizeReadablePort | PositionReadablePort,
     axis: "w" | "h" | "x" | "y",
   ) {
     this.value =
@@ -148,6 +149,7 @@ export class ScalarAdapter implements ScalarReadablePort {
             const [x, y] = source.position();
             return axis === "y" ? y : x;
           };
+    this._dependencies = [source];
     this.snapshot();
   }
 
@@ -160,7 +162,7 @@ export class ScalarAdapter implements ScalarReadablePort {
   }
 
   public dependencies(): SnapshotPort[] {
-    return [this.source];
+    return this._dependencies;
   }
 }
 
@@ -175,6 +177,7 @@ export class ScalarThresholdRatio implements RatioReadablePort {
   private _snapshot = 0;
   private readonly thresholds: Readonly<number[]>;
   private readonly ratios: Readonly<number[]>;
+  private readonly _dependencies: SnapshotPort[];
 
   constructor(
     private readonly source: ScalarReadablePort,
@@ -188,6 +191,7 @@ export class ScalarThresholdRatio implements RatioReadablePort {
     if (this.ratios.length !== this.thresholds.length + 1) {
       throw new Error("ScalarThresholdRatio: ratios length must be thresholds.length + 1");
     }
+    this._dependencies = [source];
     this.snapshot();
   }
 
@@ -205,7 +209,7 @@ export class ScalarThresholdRatio implements RatioReadablePort {
   }
 
   public dependencies(): SnapshotPort[] {
-    return [this.source];
+    return this._dependencies;
   }
 }
 
@@ -250,7 +254,7 @@ export class BoxRelativePosition implements PositionReadablePort, VectorReadable
   private _snapshot: [number, number] = [0, 0];
   private readonly getXRatio: () => number;
   private readonly getYRatio: () => number;
-  private readonly ratioDeps: RatioReadablePort[];
+  private readonly _dependencies: SnapshotPort[];
 
   constructor(
     private readonly positionSource: PositionReadablePort,
@@ -259,9 +263,10 @@ export class BoxRelativePosition implements PositionReadablePort, VectorReadable
   ) {
     const { getter: getX, port: xPort } = resolveRatio(options.x);
     const { getter: getY, port: yPort } = resolveRatio(options.y);
+    const ratioPorts = [xPort, yPort].filter((p): p is RatioReadablePort => p !== null);
     this.getXRatio = getX;
     this.getYRatio = getY;
-    this.ratioDeps = [xPort, yPort].filter((p): p is RatioReadablePort => p !== null);
+    this._dependencies = [positionSource, sizeSource, ...ratioPorts];
     this.snapshot();
   }
 
@@ -280,7 +285,7 @@ export class BoxRelativePosition implements PositionReadablePort, VectorReadable
   }
 
   public dependencies(): SnapshotPort[] {
-    return [this.positionSource, this.sizeSource, ...this.ratioDeps];
+    return this._dependencies;
   }
 }
 
@@ -332,7 +337,7 @@ export class RelativeAlignedPosition implements PositionReadablePort, VectorRead
   private _snapshot: [number, number] = [0, 0];
   private readonly getXRatio: () => number;
   private readonly getYRatio: () => number;
-  private readonly ratioDeps: RatioReadablePort[];
+  private readonly _dependencies: SnapshotPort[];
 
   constructor(
     private readonly positionSource: PositionReadablePort,
@@ -341,9 +346,10 @@ export class RelativeAlignedPosition implements PositionReadablePort, VectorRead
   ) {
     const { getter: getX, port: xPort } = resolveRatio(options.x);
     const { getter: getY, port: yPort } = resolveRatio(options.y);
+    const ratioPorts = [xPort, yPort].filter((p): p is RatioReadablePort => p !== null);
     this.getXRatio = getX;
     this.getYRatio = getY;
-    this.ratioDeps = [xPort, yPort].filter((p): p is RatioReadablePort => p !== null);
+    this._dependencies = [positionSource, sizeSource, ...ratioPorts];
     this.snapshot();
   }
 
@@ -362,7 +368,7 @@ export class RelativeAlignedPosition implements PositionReadablePort, VectorRead
   }
 
   public dependencies(): SnapshotPort[] {
-    return [this.positionSource, this.sizeSource, ...this.ratioDeps];
+    return this._dependencies;
   }
 }
 
