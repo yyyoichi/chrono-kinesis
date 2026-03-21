@@ -767,9 +767,9 @@ class WindowResizeSignal {
       window.removeEventListener("resize", this.onResize);
     }
   }
-  private onResize = (ev: UIEvent) => {
+  private onResize = (_ev: UIEvent) => {
     for (const handler of this.handlers) {
-      handler(ev.target as Window);
+      handler(window);
     }
   };
 }
