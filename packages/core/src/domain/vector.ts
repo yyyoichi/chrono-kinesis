@@ -3,6 +3,7 @@ import type {
   PositionReadablePort,
   ProgressReadablePort,
   RatioReadablePort,
+  ScalarReadablePort,
   SizeReadablePort,
   SnapshotPort,
   TriggerReadablePort,
@@ -106,6 +107,101 @@ function resolveRatio(
   const safe = Number.isFinite(num) ? num : fallback;
   const clamped = Math.max(0, Math.min(1, safe));
   return { getter: () => clamped, port: null };
+}
+
+export class ScalarAdapter implements ScalarReadablePort {
+  private _snapshot = 0;
+  private readonly value: () => number;
+
+  public static fromSizeW(source: SizeReadablePort): ScalarAdapter {
+    return new ScalarAdapter(source, "w");
+  }
+
+  public static fromSizeH(source: SizeReadablePort): ScalarAdapter {
+    return new ScalarAdapter(source, "h");
+  }
+
+  public static fromPositionX(source: PositionReadablePort): ScalarAdapter {
+    return new ScalarAdapter(source, "x");
+  }
+
+  public static fromPositionY(source: PositionReadablePort): ScalarAdapter {
+    return new ScalarAdapter(source, "y");
+  }
+
+  private constructor(
+    private readonly source: SizeReadablePort | PositionReadablePort,
+    axis: "w" | "h" | "x" | "y",
+  ) {
+    this.value =
+      "size" in source
+        ? () => {
+            const [width, height] = source.size();
+            return axis === "h" ? height : width;
+          }
+        : () => {
+            const [x, y] = source.position();
+            return axis === "y" ? y : x;
+          };
+    this.snapshot();
+  }
+
+  public snapshot(): void {
+    this._snapshot = this.value();
+  }
+
+  public get scalar(): number {
+    return this._snapshot;
+  }
+
+  public dependencies(): SnapshotPort[] {
+    return [this.source];
+  }
+}
+
+type ScalarThresholdRatioOptions = {
+  /** 昇順しきい値。例: [600, 1024] */
+  thresholds: number[];
+  /** しきい値区間ごとの ratio。length は thresholds.length + 1 */
+  ratios: number[];
+};
+
+export class ScalarThresholdRatio implements RatioReadablePort {
+  private _snapshot = 0;
+  private readonly thresholds: Readonly<number[]>;
+  private readonly ratios: Readonly<number[]>;
+
+  constructor(
+    private readonly source: ScalarReadablePort,
+    options: ScalarThresholdRatioOptions,
+  ) {
+    this.thresholds = options.thresholds;
+    this.ratios = options.ratios.map((x) => {
+      const safe = Number.isFinite(x) ? x : 0;
+      return Math.max(0, Math.min(1, safe));
+    });
+    if (this.ratios.length !== this.thresholds.length + 1) {
+      throw new Error("ScalarThresholdRatio: ratios length must be thresholds.length + 1");
+    }
+    this.snapshot();
+  }
+
+  public snapshot(): void {
+    const value = this.source.scalar;
+    let index = 0;
+    while (index < this.thresholds.length && value >= this.thresholds[index]) {
+      index += 1;
+    }
+    this._snapshot = this.ratios[index];
+  }
+
+  public get ratio(): number {
+    return this._snapshot;
+  }
+
+  public dependencies(): SnapshotPort[] {
+    return [this.source];
+  }
 }
 
 /** 矩形の左上座標と幅高さから、矩形の中心点を返します */
