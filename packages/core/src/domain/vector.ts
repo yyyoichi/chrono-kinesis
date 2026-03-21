@@ -439,9 +439,9 @@ export class FixedPosition implements VectorReadablePort, PositionReadablePort {
 }
 
 type OffsetPositionOptions = {
-  /** 左方向オフセット(px)。固定値 or ScalarReadablePort。 */
+  /** x方向オフセット(px)。固定値 or ScalarReadablePort。 */
   leftPx?: number | ScalarReadablePort;
-  /** 上方向オフセット(px)。固定値 or ScalarReadablePort。 */
+  /** y方向オフセット(px)。固定値 or ScalarReadablePort。 */
   topPx?: number | ScalarReadablePort;
 };
 
