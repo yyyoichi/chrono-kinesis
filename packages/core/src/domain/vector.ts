@@ -495,6 +495,32 @@ export class OffsetPosition implements PositionReadablePort, VectorReadablePort 
   }
 }
 
+// positionが特定の領域内にあるかどうかをGateで返す。
+export class PositionInRegionGate implements GateReadablePort {
+  private _snapshot: 0 | 1 = 0;
+  private _dependencies: SnapshotPort[] = [];
+  constructor(
+    private readonly position: PositionReadablePort,
+    private readonly regionTopLeft: PositionReadablePort,
+    private readonly regionSize: SizeReadablePort,
+  ) {
+    this._dependencies = [position, regionTopLeft, regionSize];
+    this.snapshot();
+  }
+  public snapshot() {
+    const [px, py] = this.position.position();
+    const [rx, ry] = this.regionTopLeft.position();
+    const [rw, rh] = this.regionSize.size();
+    this._snapshot = rx <= px && px <= rx + rw && ry <= py && py <= ry + rh ? 1 : 0;
+  }
+  public get gate() {
+    return this._snapshot;
+  }
+  public dependencies() {
+    return this._dependencies;
+  }
+}
+
 type TriggerToggleReducerOptions = {
   initGate?: 0 | 1;
 };
