@@ -539,16 +539,16 @@ export class PositionInRegionGate implements GateReadablePort {
     this._dependencies = [position, ...regionPorts];
     this.snapshot();
   }
-  public snapshot() {
+  public snapshot(): void {
     const [px, py] = this.position.position();
     const [rx, ry] = this.getRegionTopLeft();
     const [rw, rh] = this.getRegionSize();
     this._snapshot = rx <= px && px <= rx + rw && ry <= py && py <= ry + rh ? 1 : 0;
   }
-  public get gate() {
+  public get gate(): Readonly<0 | 1> {
     return this._snapshot;
   }
-  public dependencies() {
+  public dependencies(): SnapshotPort[] {
     return this._dependencies;
   }
 }
