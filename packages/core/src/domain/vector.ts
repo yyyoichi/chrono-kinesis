@@ -174,13 +174,6 @@ export class ScalarAdapter implements ScalarReadablePort {
   }
 }
 
-type ScalarThresholdRatioOptions = {
-  /** 昇順しきい値。例: [600, 1024] */
-  thresholds: number[];
-  /** しきい値区間ごとの ratio。length は thresholds.length + 1 */
-  ratios: number[];
-};
-
 export class ScalarThresholdRatio implements RatioReadablePort {
   private _snapshot = 0;
   private readonly thresholds: Readonly<number[]>;
@@ -189,10 +182,13 @@ export class ScalarThresholdRatio implements RatioReadablePort {
 
   constructor(
     private readonly source: ScalarReadablePort,
-    options: ScalarThresholdRatioOptions,
+    /** 昇順しきい値。例: [600, 1024] */
+    thresholds: number[],
+    /** しきい値区間ごとの ratio。length は thresholds.length + 1 */
+    ratios: number[],
   ) {
-    this.thresholds = [...options.thresholds];
-    this.ratios = options.ratios.map((x) => {
+    this.thresholds = [...thresholds];
+    this.ratios = ratios.map((x) => {
       const safe = Number.isFinite(x) ? x : 0;
       return Math.max(0, Math.min(1, safe));
     });
@@ -221,13 +217,6 @@ export class ScalarThresholdRatio implements RatioReadablePort {
   }
 }
 
-type ScalarThresholdScalarOptions = {
-  /** 昇順しきい値。例: [600, 1024] */
-  thresholds: number[];
-  /** しきい値区間ごとの scalar。length は thresholds.length + 1 */
-  scalars: number[];
-};
-
 export class ScalarThresholdScalar implements ScalarReadablePort {
   private _snapshot = 0;
   private readonly thresholds: Readonly<number[]>;
@@ -236,10 +225,13 @@ export class ScalarThresholdScalar implements ScalarReadablePort {
 
   constructor(
     private readonly source: ScalarReadablePort,
-    options: ScalarThresholdScalarOptions,
+    /** 昇順しきい値。例: [600, 1024] */
+    thresholds: number[],
+    /** しきい値区間ごとの scalar。length は thresholds.length + 1 */
+    scalars: number[],
   ) {
-    this.thresholds = [...options.thresholds];
-    this.scalars = options.scalars.map((x) => (Number.isFinite(x) ? x : 0));
+    this.thresholds = [...thresholds];
+    this.scalars = scalars.map((x) => (Number.isFinite(x) ? x : 0));
     if (this.scalars.length !== this.thresholds.length + 1) {
       throw new Error("ScalarThresholdScalar: scalars length must be thresholds.length + 1");
     }
@@ -272,10 +264,7 @@ export class BoxCenterPosition implements PositionReadablePort, VectorReadablePo
     private readonly positionSource: PositionReadablePort, // 矩形の左上座標
     private readonly sizeSource: SizeReadablePort,
   ) {
-    this.source = new BoxRelativePosition(this.positionSource, this.sizeSource, {
-      x: 0.5,
-      y: 0.5,
-    });
+    this.source = new BoxRelativePosition(this.positionSource, this.sizeSource, 0.5, 0.5);
   }
   public snapshot() {
     this.source.snapshot();
@@ -291,13 +280,6 @@ export class BoxCenterPosition implements PositionReadablePort, VectorReadablePo
   }
 }
 
-type BoxRelativePositionOptions = {
-  /** x方向の位置（rate）。0=左端, 0.5=中央, 1.0=右端。デフォルトは0.5。数値固定またはRatioReadablePortで動的に指定できます。 */
-  x?: number | RatioReadablePort;
-  /** y方向の位置（rate）。0=上端, 0.5=中央, 1.0=下端。デフォルトは0.5。数値固定またはRatioReadablePortで動的に指定できます。 */
-  y?: number | RatioReadablePort;
-};
-
 /** 矩形の左上座標と幅高さから、任意の相対位置（rate: 0〜1）を返します。
  * x=0.5, y=0.5 で BoxCenterPosition と等価になります。
  * x/y に RatioReadablePort を渡すと snapshot ごとに動的な rate を使えます。
@@ -311,10 +293,13 @@ export class BoxRelativePosition implements PositionReadablePort, VectorReadable
   constructor(
     private readonly positionSource: PositionReadablePort,
     private readonly sizeSource: SizeReadablePort,
-    options: BoxRelativePositionOptions = {},
+    /** x方向の位置（rate）。0=左端, 0.5=中央, 1.0=右端。数値固定またはRatioReadablePortで動的に指定できます。 */
+    x: number | RatioReadablePort,
+    /** y方向の位置（rate）。0=上端, 0.5=中央, 1.0=下端。数値固定またはRatioReadablePortで動的に指定できます。 */
+    y: number | RatioReadablePort,
   ) {
-    const { getter: getX, port: xPort } = resolveRatio(options.x);
-    const { getter: getY, port: yPort } = resolveRatio(options.y);
+    const { getter: getX, port: xPort } = resolveRatio(x);
+    const { getter: getY, port: yPort } = resolveRatio(y);
     const ratioPorts = [xPort, yPort].filter((p): p is RatioReadablePort => p !== null);
     this.getXRatio = getX;
     this.getYRatio = getY;
@@ -351,10 +336,7 @@ export class CenterAlignedPosition implements PositionReadablePort, VectorReadab
     private readonly positionSource: PositionReadablePort, // 中心に来てほしい点
     private readonly sizeSource: SizeReadablePort, // 配置する矩形
   ) {
-    this.source = new RelativeAlignedPosition(this.positionSource, this.sizeSource, {
-      x: 0.5,
-      y: 0.5,
-    });
+    this.source = new RelativeAlignedPosition(this.positionSource, this.sizeSource, 0.5, 0.5);
   }
 
   public snapshot() {
@@ -374,13 +356,6 @@ export class CenterAlignedPosition implements PositionReadablePort, VectorReadab
   }
 }
 
-type RelativeAlignedPositionOptions = {
-  /** x方向の位置（rate）。0=左端, 0.5=中央, 1.0=右端。デフォルトは0.5。数値固定またはRatioReadablePortで動的に指定できます。 */
-  x?: number | RatioReadablePort;
-  /** y方向の位置（rate）。0=上端, 0.5=中央, 1.0=下端。デフォルトは0.5。数値固定またはRatioReadablePortで動的に指定できます。 */
-  y?: number | RatioReadablePort;
-};
-
 /** 指定した点を基準として、矩形サイズ分オフセットした左上座標を返します。
  * x=0.5, y=0.5 で CenterAlignedPosition と等価になります。
  * x/y に RatioReadablePort を渡すと snapshot ごとに動的な rate を使えます。
@@ -394,10 +369,13 @@ export class RelativeAlignedPosition implements PositionReadablePort, VectorRead
   constructor(
     private readonly positionSource: PositionReadablePort,
     private readonly sizeSource: SizeReadablePort,
-    options: RelativeAlignedPositionOptions = {},
+    /** x方向の位置（rate）。0=左端, 0.5=中央, 1.0=右端。数値固定またはRatioReadablePortで動的に指定できます。 */
+    x: number | RatioReadablePort,
+    /** y方向の位置（rate）。0=上端, 0.5=中央, 1.0=下端。数値固定またはRatioReadablePortで動的に指定できます。 */
+    y: number | RatioReadablePort,
   ) {
-    const { getter: getX, port: xPort } = resolveRatio(options.x);
-    const { getter: getY, port: yPort } = resolveRatio(options.y);
+    const { getter: getX, port: xPort } = resolveRatio(x);
+    const { getter: getY, port: yPort } = resolveRatio(y);
     const ratioPorts = [xPort, yPort].filter((p): p is RatioReadablePort => p !== null);
     this.getXRatio = getX;
     this.getYRatio = getY;
@@ -438,13 +416,6 @@ export class FixedPosition implements VectorReadablePort, PositionReadablePort {
   }
 }
 
-type OffsetPositionOptions = {
-  /** x方向オフセット(px)。固定値 or ScalarReadablePort。 */
-  leftPx?: number | ScalarReadablePort;
-  /** y方向オフセット(px)。固定値 or ScalarReadablePort。 */
-  topPx?: number | ScalarReadablePort;
-};
-
 function resolveScalar(
   raw: number | ScalarReadablePort | undefined,
   fallback = 0,
@@ -469,10 +440,13 @@ export class OffsetPosition implements PositionReadablePort, VectorReadablePort 
 
   constructor(
     private readonly source: PositionReadablePort,
-    options: OffsetPositionOptions = {},
+    /** x方向オフセット(px)。固定値 or ScalarReadablePort。 */
+    leftPx?: number | ScalarReadablePort,
+    /** y方向オフセット(px)。固定値 or ScalarReadablePort。 */
+    topPx?: number | ScalarReadablePort,
   ) {
-    const { getter: getLeftPx, port: leftPort } = resolveScalar(options.leftPx);
-    const { getter: getTopPx, port: topPort } = resolveScalar(options.topPx);
+    const { getter: getLeftPx, port: leftPort } = resolveScalar(leftPx);
+    const { getter: getTopPx, port: topPort } = resolveScalar(topPx);
     this.getLeftPx = getLeftPx;
     this.getTopPx = getTopPx;
     const scalarPort = [leftPort, topPort].filter((p): p is ScalarReadablePort => p !== null);
