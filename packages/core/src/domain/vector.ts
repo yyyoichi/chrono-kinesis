@@ -495,22 +495,54 @@ export class OffsetPosition implements PositionReadablePort, VectorReadablePort 
   }
 }
 
+function resolvePosition(
+  raw: PositionReadablePort | ReturnType<PositionReadablePort["position"]>,
+): { getter: () => Readonly<[number, number]>; port: PositionReadablePort | null } {
+  if (raw && typeof raw === "object" && "position" in raw) {
+    return { getter: () => raw.position(), port: raw };
+  }
+  if (Array.isArray(raw) && raw.length === 2) {
+    return { getter: () => raw, port: null };
+  }
+  return { getter: () => [0, 0], port: null };
+}
+
+function resolveSize(raw: SizeReadablePort | ReturnType<SizeReadablePort["size"]>): {
+  getter: () => Readonly<[number, number]>;
+  port: SizeReadablePort | null;
+} {
+  if (raw && typeof raw === "object" && "size" in raw) {
+    return { getter: () => raw.size(), port: raw };
+  }
+  if (Array.isArray(raw) && raw.length === 2) {
+    return { getter: () => raw, port: null };
+  }
+  return { getter: () => [0, 0], port: null };
+}
+
 // positionが特定の領域内にあるかどうかをGateで返す。
 export class PositionInRegionGate implements GateReadablePort {
   private _snapshot: 0 | 1 = 0;
+  private readonly getRegionTopLeft: () => Readonly<[number, number]>;
+  private readonly getRegionSize: () => Readonly<[number, number]>;
   private _dependencies: SnapshotPort[] = [];
   constructor(
     private readonly position: PositionReadablePort,
-    private readonly regionTopLeft: PositionReadablePort,
-    private readonly regionSize: SizeReadablePort,
+    regionTopLeft: PositionReadablePort | ReturnType<PositionReadablePort["position"]>,
+    regionSize: SizeReadablePort | ReturnType<SizeReadablePort["size"]>,
   ) {
-    this._dependencies = [position, regionTopLeft, regionSize];
+    const { getter: getRegionTopLeft, port: regionTopLeftPort } = resolvePosition(regionTopLeft);
+    const { getter: getRegionSize, port: regionSizePort } = resolveSize(regionSize);
+    this.getRegionTopLeft = getRegionTopLeft;
+    this.getRegionSize = getRegionSize;
+    const regionPorts = [regionTopLeftPort, regionSizePort].filter((p) => p !== null);
+    this._dependencies = [position, ...regionPorts];
     this.snapshot();
   }
   public snapshot() {
     const [px, py] = this.position.position();
-    const [rx, ry] = this.regionTopLeft.position();
-    const [rw, rh] = this.regionSize.size();
+    const [rx, ry] = this.getRegionTopLeft();
+    const [rw, rh] = this.getRegionSize();
     this._snapshot = rx <= px && px <= rx + rw && ry <= py && py <= ry + rh ? 1 : 0;
   }
   public get gate() {
