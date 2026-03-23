@@ -8,7 +8,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     id="drag-to-region-box"
     style="position: relative; width: 100%; height: 100%;"
   >
-    <!-- ゴースト。ポインターの位置よって配置が代わります。 -->
+    <!-- ゴースト。ポインターの位置によって配置が変わります。 -->
     <div
       id="drag-to-region-pointer-ghost"
       style="position: absolute; top: 0; left: 0; opacity: 0; z-index: -1; width: 4rem; height: 4rem; margin: 0;"
@@ -22,7 +22,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     </div>
     <!-- ドラッグエリア（リージョン） -->
     <div
-      style="position: absolute; top: 0; left: 50%; transform-x: -50%; z-index: 5; display:flex; width: 50%; height: 100%; margin: 0; border: 1rem lightgray dashed;"
+      style="position: absolute; top: 0; left: 50%; z-index: 5; display:flex; width: 50%; height: 100%; margin: 0; border: 1rem lightgray dashed;"
     >
       <div
         id="drag-to-region-region"
