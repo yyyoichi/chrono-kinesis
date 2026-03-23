@@ -1,5 +1,5 @@
 import type { SimulationState } from "./models/simulation-state";
-import type { EnginePort, KineticsPort, VectorReadablePort } from "./ports";
+import type { EnginePort, KineticsPort, PositionReadablePort, VectorReadablePort } from "./ports";
 
 type EngineResult = {
   position: number;
@@ -92,6 +92,21 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
 
   private engineAt(n: number): EnginePort {
     return this.engines[n] ?? this.engines[this.engines.length - 1];
+  }
+}
+
+// 明示的にベクトル[0, 1]を[x, y]のPositionとしてKineticsを利用するクラス。
+export class PositionKinetics extends Kinetics implements PositionReadablePort {
+  constructor(absolute: Readonly<[number, number]> | Readonly<number[]>, options: Options = {}) {
+    const length = absolute.length;
+    if (length < 2) {
+      throw new Error("PositionKinetics requires at least 2 dimensions");
+    }
+    super(absolute, options);
+  }
+  public position(): Readonly<[number, number]> {
+    const [x, y] = this.vector();
+    return [x, y];
   }
 }
 
