@@ -42,6 +42,7 @@ export class DomSource
     parent: Pick<HTMLElement, "appendChild"> = document.body,
   ) {
     const clonedElement = this.element.cloneNode(true) as HTMLElement;
+    clonedElement.removeAttribute("id");
     parent.appendChild(clonedElement);
 
     const src = new DomSource(clonedElement);
