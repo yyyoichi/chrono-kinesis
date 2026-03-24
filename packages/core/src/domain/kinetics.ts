@@ -1,5 +1,12 @@
 import type { SimulationState } from "./models/simulation-state";
-import type { EnginePort, KineticsPort, PositionReadablePort, VectorReadablePort } from "./ports";
+import type {
+  EnginePort,
+  KineticsPort,
+  PositionReadablePort,
+  SnapshotPort,
+  TriggerReadablePort,
+  VectorReadablePort,
+} from "./ports";
 
 type EngineResult = {
   position: number;
@@ -23,11 +30,11 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
   private engines: EnginePort[] = [];
 
   constructor(
-    absolute: Readonly<[number, number]> | Readonly<number[]> | number[],
+    init: Readonly<[number, number]> | Readonly<number[]> | number[],
     options: Options = {},
   ) {
-    this._state.ndim = absolute.length;
-    this._state.absolute = [...absolute];
+    this._state.ndim = init.length;
+    this._state.absolute = [...init];
     this._state.relative = new Array(this._state.ndim).fill(0);
     this._state.velocity = new Array(this._state.ndim).fill(0);
     this.setEngine(options.engine ?? new SpringEngine());
@@ -93,6 +100,23 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
   private engineAt(n: number): EnginePort {
     return this.engines[n] ?? this.engines[this.engines.length - 1];
   }
+
+  /**
+   * 外部レイアウト変化に応じて初期座標を再基準化します。
+   * absolute, relative をシフトして新しい初期座標に合わせます。
+   * velocity、energy は保持されます。
+   * @param newInit 新しい初期座標
+   */
+  protected teleport(newInit: readonly number[]): void {
+    const ndim = Math.min(newInit.length, this._state.ndim);
+    for (let i = 0; i < ndim; i++) {
+      const currentInitial = this._state.absolute[i] - this._state.relative[i];
+      const delta = newInit[i] - currentInitial;
+      this._state.absolute[i] += delta;
+      this._state.relative[i] += delta;
+    }
+    console.debug("Kinetics teleported to new initial:", { newInit, state: this._state });
+  }
 }
 
 // 明示的にベクトル[0, 1]を[x, y]のPositionとしてKineticsを利用するクラス。
@@ -107,6 +131,53 @@ export class PositionKinetics extends Kinetics implements PositionReadablePort {
   public position(): Readonly<[number, number]> {
     const [x, y] = this.vector();
     return [x, y];
+  }
+}
+
+/**
+ * Triggerが発火したときに、位置情報源から新しい初期座標を取得して teleport するKinetics。
+ * snapshotされない場合へのフォールバックとしてcomputeでも確認します。
+ */
+export class TriggeredTeleportKinetics extends Kinetics {
+  private readonly _dependencies: SnapshotPort[] = [];
+  private readonly _vector: VectorReadablePort;
+  private readonly _trigger: TriggerReadablePort;
+  private doneTeleport = false;
+
+  constructor(vector: VectorReadablePort, trigger: TriggerReadablePort, options: Options = {}) {
+    super(vector.vector(), options);
+    this._vector = vector;
+    this._trigger = trigger;
+    this._dependencies = [this._vector, this._trigger];
+    this.snapshot();
+  }
+
+  public snapshot(): void {
+    // このフレームで trigger=1 のときマークする
+    if (this._trigger?.trigger === 1) {
+      console.debug("TriggeredTeleportKinetics snapshot triggered teleport:", {
+        trigger: this._trigger.trigger,
+      });
+      this.teleport(this._vector.vector());
+      this.doneTeleport = true;
+    }
+    super.snapshot();
+  }
+
+  public compute(dt: number, vector: Readonly<number[]>): void {
+    // snapshotされていなかった場合のフォールバック: compute開始時にtriggerが1かつ未実行ならteleport
+    if (this._trigger.trigger === 1 && !this.doneTeleport) {
+      console.debug("TriggeredTeleportKinetics compute triggered teleport (fallback):", {
+        trigger: this._trigger.trigger,
+      });
+      this.teleport(this._vector.vector());
+    }
+    super.compute(dt, vector);
+    this.doneTeleport = false;
+  }
+
+  public dependencies(): SnapshotPort[] {
+    return this._dependencies;
   }
 }
 
