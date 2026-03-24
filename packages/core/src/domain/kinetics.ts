@@ -4,7 +4,6 @@ import type {
   KineticsPort,
   PositionReadablePort,
   SnapshotPort,
-  TriggerReadablePort,
   VectorReadablePort,
 } from "./ports";
 
@@ -115,7 +114,6 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
       this._state.absolute[i] += delta;
       this._state.relative[i] += delta;
     }
-    console.debug("Kinetics teleported to new initial:", { newInit, state: this._state });
   }
 }
 
@@ -135,49 +133,29 @@ export class PositionKinetics extends Kinetics implements PositionReadablePort {
 }
 
 /**
- * Triggerが発火したときに、位置情報源から新しい初期座標を取得して teleport するKinetics。
- * snapshotされない場合へのフォールバックとしてcomputeでも確認します。
+ * 初期座標が変更される Kinetics。
  */
-export class TriggeredTeleportKinetics extends Kinetics {
-  private readonly _dependencies: SnapshotPort[] = [];
+export class TeleportKinetics extends Kinetics {
   private readonly _vector: VectorReadablePort;
-  private readonly _trigger: TriggerReadablePort;
-  private doneTeleport = false;
+  private _current: Readonly<number[]> = [];
 
-  constructor(vector: VectorReadablePort, trigger: TriggerReadablePort, options: Options = {}) {
+  constructor(vector: VectorReadablePort, options: Options = {}) {
     super(vector.vector(), options);
     this._vector = vector;
-    this._trigger = trigger;
-    this._dependencies = [this._vector, this._trigger];
-    this.snapshot();
-  }
-
-  public snapshot(): void {
-    // このフレームで trigger=1 のときマークする
-    if (this._trigger?.trigger === 1) {
-      console.debug("TriggeredTeleportKinetics snapshot triggered teleport:", {
-        trigger: this._trigger.trigger,
-      });
-      this.teleport(this._vector.vector());
-      this.doneTeleport = true;
-    }
-    super.snapshot();
+    this._current = vector.vector();
   }
 
   public compute(dt: number, vector: Readonly<number[]>): void {
-    // snapshotされていなかった場合のフォールバック: compute開始時にtriggerが1かつ未実行ならteleport
-    if (this._trigger.trigger === 1 && !this.doneTeleport) {
-      console.debug("TriggeredTeleportKinetics compute triggered teleport (fallback):", {
-        trigger: this._trigger.trigger,
-      });
-      this.teleport(this._vector.vector());
+    const next = this._vector.vector();
+    if (this._current !== next) {
+      this.teleport(next);
+      this._current = next;
     }
     super.compute(dt, vector);
-    this.doneTeleport = false;
   }
 
   public dependencies(): SnapshotPort[] {
-    return this._dependencies;
+    return [this._vector];
   }
 }
 
