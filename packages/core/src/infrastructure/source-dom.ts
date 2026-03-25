@@ -1,6 +1,7 @@
 import type { PositionReadablePort, SizeReadablePort, VectorReadablePort } from "../domain/ports";
 import type { DomPhysicsSource } from "./contracts/dom-physics-source";
 
+/**@deprecated APIリクエストが多重のため。より高効率な ElementSource を利用する。 */
 export class DomSource
   implements VectorReadablePort, PositionReadablePort, SizeReadablePort, DomPhysicsSource
 {
@@ -16,8 +17,19 @@ export class DomSource
   }
   public snapshot() {
     const rect = this.element.getBoundingClientRect();
-    this._snapshot.absolute = [rect.left + window.scrollX, rect.top + window.scrollY];
-    this._snapshot.size = [rect.width, rect.height];
+    const nextX = rect.left + window.scrollX;
+    const nextY = rect.top + window.scrollY;
+    const [currentX, currentY] = this._snapshot.absolute;
+    if (currentX !== nextX || currentY !== nextY) {
+      this._snapshot.absolute = [nextX, nextY];
+    }
+
+    const nextW = rect.width;
+    const nextH = rect.height;
+    const [currentW, currentH] = this._snapshot.size;
+    if (currentW !== nextW || currentH !== nextH) {
+      this._snapshot.size = [nextW, nextH];
+    }
     return;
   }
   public position(): Readonly<[number, number]> {
