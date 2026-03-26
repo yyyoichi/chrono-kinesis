@@ -101,9 +101,9 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
   }
 
   /**
-   * 外部レイアウト変化に応じて初期座標を再基準化します。
-   * absolute, relative をシフトして新しい初期座標に合わせます。
-   * velocity、energy は保持されます。
+   * 基準としている初期座標の再基準化します。
+   * relative をシフトして新しい初期座標に合わせます。
+   * absolute、velocity、energy は保持されます。
    * @param newInit 新しい初期座標
    */
   protected teleport(newInit: readonly number[]): void {
@@ -111,8 +111,7 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
     for (let i = 0; i < ndim; i++) {
       const currentInitial = this._state.absolute[i] - this._state.relative[i];
       const delta = newInit[i] - currentInitial;
-      this._state.absolute[i] += delta;
-      this._state.relative[i] += delta;
+      this._state.relative[i] -= delta;
     }
   }
 }
@@ -148,7 +147,7 @@ export class TeleportKinetics extends Kinetics {
   public compute(dt: number, vector: Readonly<number[]>): void {
     const next = this._vector.vector();
     if (this._current !== next) {
-      this.teleport(next);
+      super.teleport(next);
       this._current = next;
     }
     super.compute(dt, vector);
