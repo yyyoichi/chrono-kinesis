@@ -13,8 +13,9 @@ type ElementLayoutRectOption = {
 };
 
 /**
- * Element の座標を持つ。デフォルトで初期座標は固定されます。座標はtransformの影響を受けないドキュメント座標で返されます。
- * 初期化時の要素をSizeReadablePortとして利用します。動的なサイズ変更を期待する場合は ElementResizeTriggerClock を利用してください。
+ * Element の座標を持つ。デフォルトで初期座標は固定されます。座標は scale/rotate を含むあらゆる CSS transform の影響を受けないレイアウト座標（offsetParent チェーン基準のドキュメント座標）で返されます。
+ * サイズも offsetWidth/offsetHeight を使用するため transform に非依存です。
+ * 初期化時のサイズを固定で利用します。動的なサイズ変更を期待する場合は ElementResizeTriggerClock を利用してください。
  */
 export class ElementLayoutRect
   implements VectorReadablePort, PositionReadablePort, SizeReadablePort
@@ -27,9 +28,8 @@ export class ElementLayoutRect
     private readonly element: HTMLElement,
     options: ElementLayoutRectOption = {},
   ) {
-    const rect = this.element.getBoundingClientRect();
-    this._size = [rect.width, rect.height];
-    this.update(rect);
+    this._size = [this.element.offsetWidth, this.element.offsetHeight];
+    this.update();
     if (options.trigger) {
       this.trigger = options.trigger;
       this._dependencies.push(options.trigger);
@@ -54,8 +54,8 @@ export class ElementLayoutRect
   }
 
   /**座標に更新があれば_snapshotを更新します */
-  private update(rect: DOMRect = this.element.getBoundingClientRect()) {
-    const [nextX, nextY] = readDocumentLayoutPosition(this.element, rect);
+  private update() {
+    const [nextX, nextY] = readDocumentLayoutPosition(this.element);
     if (this._snapshot[0] !== nextX || this._snapshot[1] !== nextY) {
       this._snapshot[0] = nextX;
       this._snapshot[1] = nextY;
@@ -63,9 +63,10 @@ export class ElementLayoutRect
   }
 }
 
-/**Gateに従ってelementの親要素を切り替えます。座標はtransformの影響を受けないドキュメント座標で返されます。
+/**Gateに従ってelementの親要素を切り替えます。座標は scale/rotate を含むあらゆる CSS transform の影響を受けないレイアウト座標（offsetParent チェーン基準のドキュメント座標）で返されます。
  * Gateが切り替わったらelementの座標を更新します。
- * サイズは初期化時のサイズを固定で利用します。動的なサイズ変更を期待する場合は ElementResizeTriggerClock を利用してください。
+ * サイズは offsetWidth/offsetHeight を使用するため transform に非依存です。
+ * 初期化時のサイズを固定で利用します。動的なサイズ変更を期待する場合は ElementResizeTriggerClock を利用してください。
  */
 export class ParentSwitchedLayoutRect
   implements VectorReadablePort, PositionReadablePort, SizeReadablePort
@@ -89,9 +90,8 @@ export class ParentSwitchedLayoutRect
       throw new Error("Element must be a child of either trueParent or falseParent");
     }
     this._dependencies = [gate];
-    const rect = this.element.getBoundingClientRect();
-    this._snapshot = readDocumentLayoutPosition(element, rect);
-    this._size = [rect.width, rect.height];
+    this._snapshot = readDocumentLayoutPosition(element);
+    this._size = [element.offsetWidth, element.offsetHeight];
     this.snapshot();
   }
   public snapshot(): void {
@@ -126,22 +126,17 @@ export class ParentSwitchedLayoutRect
   }
 }
 
-// Domの配置される(Layout)ドキュメント座標を返します。
-function readDocumentLayoutPosition(
-  element: HTMLElement,
-  rect: DOMRect = element.getBoundingClientRect(),
-): [number, number] {
-  let x = rect.left + window.scrollX;
-  let y = rect.top + window.scrollY;
-
-  const transform = getComputedStyle(element).transform;
-  if (!transform || transform === "none") {
-    return [x, y];
+// DOMのレイアウト上のドキュメント座標を返します。
+// offsetParent チェーンを積み上げるため、translate/scale/rotate などあらゆる
+// CSS transform の影響を受けません。
+function readDocumentLayoutPosition(element: HTMLElement): [number, number] {
+  let x = 0;
+  let y = 0;
+  let el: HTMLElement | null = element;
+  while (el !== null) {
+    x += el.offsetLeft;
+    y += el.offsetTop;
+    el = el.offsetParent as HTMLElement | null;
   }
-
-  // translate3d/translate/DOMMatrixの平行移動成分のみ打ち消します。
-  const matrix = new DOMMatrixReadOnly(transform);
-  x -= matrix.m41;
-  y -= matrix.m42;
   return [x, y];
 }
