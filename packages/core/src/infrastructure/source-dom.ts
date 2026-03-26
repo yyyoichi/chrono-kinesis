@@ -47,6 +47,9 @@ export class ElementPosition implements VectorReadablePort, PositionReadablePort
   public vector(): Readonly<number[]> {
     return this.position();
   }
+  public dependencies(): SnapshotPort[] {
+    return this._dependencies;
+  }
 
   /**座標に更新があれば_snapshotを更新します */
   private update(rect: DOMRect = this.element.getBoundingClientRect()) {
