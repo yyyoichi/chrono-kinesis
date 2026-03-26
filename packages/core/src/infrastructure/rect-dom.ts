@@ -7,23 +7,25 @@ import type {
   VectorReadablePort,
 } from "../domain";
 
-type ElementPositionOption = {
+type ElementLayoutRectOption = {
   // 座標更新のトリガー。Trigger(=1)したときに位置を更新します。
   trigger?: TriggerReadablePort;
 };
 
 /**
- * Element の座標を持つ。デフォルトで初期座標は固定されます。
+ * Element の座標を持つ。デフォルトで初期座標は固定されます。座標はtransformの影響を受けないドキュメント座標で返されます。
  * 初期化時の要素をSizeReadablePortとして利用します。動的なサイズ変更を期待する場合は ElementResizeTriggerClock を利用してください。
  */
-export class ElementPosition implements VectorReadablePort, PositionReadablePort, SizeReadablePort {
+export class ElementLayoutRect
+  implements VectorReadablePort, PositionReadablePort, SizeReadablePort
+{
   private readonly _size: [number, number]; // 固定値
   private _snapshot: [number, number] = [0, 0]; // 座標
   private readonly trigger: TriggerReadablePort | null = null; // 座標更新トリガー
   private readonly _dependencies: SnapshotPort[] = [];
   constructor(
     private readonly element: HTMLElement,
-    options: ElementPositionOption = {},
+    options: ElementLayoutRectOption = {},
   ) {
     const rect = this.element.getBoundingClientRect();
     this._size = [rect.width, rect.height];
@@ -53,8 +55,7 @@ export class ElementPosition implements VectorReadablePort, PositionReadablePort
 
   /**座標に更新があれば_snapshotを更新します */
   private update(rect: DOMRect = this.element.getBoundingClientRect()) {
-    const nextX = rect.left + window.scrollX;
-    const nextY = rect.top + window.scrollY;
+    const [nextX, nextY] = readDocumentLayoutPosition(this.element, rect);
     if (this._snapshot[0] !== nextX || this._snapshot[1] !== nextY) {
       this._snapshot[0] = nextX;
       this._snapshot[1] = nextY;
@@ -62,15 +63,15 @@ export class ElementPosition implements VectorReadablePort, PositionReadablePort
   }
 }
 
-/**Gateに従ってelementの親要素を切り替えます。
+/**Gateに従ってelementの親要素を切り替えます。座標はtransformの影響を受けないドキュメント座標で返されます。
  * Gateが切り替わったらelementの座標を更新します。
  * サイズは初期化時のサイズを固定で利用します。動的なサイズ変更を期待する場合は ElementResizeTriggerClock を利用してください。
  */
-export class GateParentSwitchPosition
+export class ParentSwitchedLayoutRect
   implements VectorReadablePort, PositionReadablePort, SizeReadablePort
 {
   private _snapshot: [number, number] = [0, 0]; // 座標
-  private readonly _size: [number, number];
+  private readonly _size: [number, number]; // 固定値
   private state: 0 | 1; // 0: falseParentの子, 1: trueParentの子
   private readonly _dependencies: SnapshotPort[];
   constructor(
@@ -125,7 +126,7 @@ export class GateParentSwitchPosition
   }
 }
 
-// Domの配置されるドキュメント座標を返します。
+// Domの配置される(Layout)ドキュメント座標を返します。
 function readDocumentLayoutPosition(
   element: HTMLElement,
   rect: DOMRect = element.getBoundingClientRect(),
