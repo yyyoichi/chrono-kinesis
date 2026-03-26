@@ -8,20 +8,26 @@ import type {
 import type { DomPhysicsSource } from "./contracts/dom-physics-source";
 
 type ElementPositionOption = {
-  // 位置更新のトリガー。Trigger(=1)したときに位置を更新します。
+  // 座標更新のトリガー。Trigger(=1)したときに位置を更新します。
   trigger?: TriggerReadablePort;
 };
 
-/** Element の位置座標を持つ。デフォルトで初期位置は固定されます。 */
-export class ElementPosition implements VectorReadablePort, PositionReadablePort {
-  private _snapshot: [number, number] = [0, 0];
-  private trigger: TriggerReadablePort | null = null;
-  private _dependencies: SnapshotPort[] = [];
+/**
+ * Element の座標を持つ。デフォルトで初期座標は固定されます。
+ * 初期化時の要素をSizeReadablePortとして利用します。動的なサイズ変更を期待する場合は ElementResizeTriggerClock を利用してください。
+ */
+export class ElementPosition implements VectorReadablePort, PositionReadablePort, SizeReadablePort {
+  private readonly _size: [number, number]; // 固定値
+  private _snapshot: [number, number] = [0, 0]; // 座標
+  private readonly trigger: TriggerReadablePort | null = null; // 座標更新トリガー
+  private readonly _dependencies: SnapshotPort[] = [];
   constructor(
     private readonly element: HTMLElement,
     options: ElementPositionOption = {},
   ) {
-    this.update();
+    const rect = this.element.getBoundingClientRect();
+    this._size = [rect.width, rect.height];
+    this.update(rect);
     if (options.trigger) {
       this.trigger = options.trigger;
       this._dependencies.push(options.trigger);
@@ -35,13 +41,15 @@ export class ElementPosition implements VectorReadablePort, PositionReadablePort
   public position(): Readonly<[number, number]> {
     return this._snapshot;
   }
+  public size(): Readonly<[number, number]> {
+    return this._size;
+  }
   public vector(): Readonly<number[]> {
     return this.position();
   }
 
   /**座標に更新があれば_snapshotを更新します */
-  private update() {
-    const rect = this.element.getBoundingClientRect();
+  private update(rect: DOMRect = this.element.getBoundingClientRect()) {
     const nextX = rect.left + window.scrollX;
     const nextY = rect.top + window.scrollY;
     if (this._snapshot[0] !== nextX || this._snapshot[1] !== nextY) {
