@@ -1,5 +1,55 @@
-import type { PositionReadablePort, SizeReadablePort, VectorReadablePort } from "../domain/ports";
+import type {
+  PositionReadablePort,
+  SizeReadablePort,
+  SnapshotPort,
+  TriggerReadablePort,
+  VectorReadablePort,
+} from "../domain/ports";
 import type { DomPhysicsSource } from "./contracts/dom-physics-source";
+
+type ElementPositionOption = {
+  // 位置更新のトリガー。Trigger(=1)したときに位置を更新します。
+  trigger?: TriggerReadablePort;
+};
+
+/** Element の位置座標を持つ。デフォルトで初期位置は固定されます。 */
+export class ElementPosition implements VectorReadablePort, PositionReadablePort {
+  private _snapshot: [number, number] = [0, 0];
+  private trigger: TriggerReadablePort | null = null;
+  private _dependencies: SnapshotPort[] = [];
+  constructor(
+    private readonly element: HTMLElement,
+    options: ElementPositionOption = {},
+  ) {
+    this.update();
+    if (options.trigger) {
+      this.trigger = options.trigger;
+      this._dependencies.push(options.trigger);
+    }
+  }
+  public snapshot() {
+    if (this.trigger?.trigger === 1) {
+      this.update();
+    }
+  }
+  public position(): Readonly<[number, number]> {
+    return this._snapshot;
+  }
+  public vector(): Readonly<number[]> {
+    return this.position();
+  }
+
+  /**座標に更新があれば_snapshotを更新します */
+  private update() {
+    const rect = this.element.getBoundingClientRect();
+    const nextX = rect.left + window.scrollX;
+    const nextY = rect.top + window.scrollY;
+    if (this._snapshot[0] !== nextX || this._snapshot[1] !== nextY) {
+      this._snapshot[0] = nextX;
+      this._snapshot[1] = nextY;
+    }
+  }
+}
 
 /**@deprecated APIリクエストが多重のため。より高効率な ElementSource を利用する。 */
 export class DomSource
