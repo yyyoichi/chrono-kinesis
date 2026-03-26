@@ -101,7 +101,7 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
   }
 
   /**
-   * 基準としている初期座標の再基準化します。
+   * 基準としている初期座標を再基準化します。
    * relative をシフトして新しい初期座標に合わせます。
    * absolute、velocity、energy は保持されます。
    * @param newInit 新しい初期座標
@@ -133,28 +133,40 @@ export class PositionKinetics extends Kinetics implements PositionReadablePort {
 
 /**
  * 初期座標が変更される Kinetics。
+ * このインスタンスをTargetに登録するか、 コンストラクタで渡す vector をTargetに登録してください。
  */
 export class TeleportKinetics extends Kinetics {
+  // 初期座標 vector 。
   private readonly _vector: VectorReadablePort;
-  private _current: Readonly<number[]> = [];
+  // 現在の初期座標
+  // snaphot時かcompute時に比較され、変更がある場合teleportされます。
+  // いずれで変更されてもsnapshotが正しい限りteleportは正常に動作します。
+  private _currentInit: Readonly<number[]> = [];
+  private readonly _dependencies: SnapshotPort[];
 
   constructor(vector: VectorReadablePort, options: Options = {}) {
     super(vector.vector(), options);
     this._vector = vector;
-    this._current = vector.vector();
+    this._currentInit = vector.vector();
+    this._dependencies = [vector];
   }
 
   public compute(dt: number, vector: Readonly<number[]>): void {
-    const next = this._vector.vector();
-    if (this._current !== next) {
-      super.teleport(next);
-      this._current = next;
-    }
+    this.updateCurrent();
     super.compute(dt, vector);
   }
-
+  public snapshot(): void {
+    this.updateCurrent();
+    super.snapshot();
+  }
   public dependencies(): SnapshotPort[] {
-    return [this._vector];
+    return this._dependencies;
+  }
+  private updateCurrent() {
+    const next = this._vector.vector();
+    if (this._currentInit === next) return;
+    super.teleport(next);
+    this._currentInit = next;
   }
 }
 
