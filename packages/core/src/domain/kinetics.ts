@@ -1,5 +1,11 @@
 import type { SimulationState } from "./models/simulation-state";
-import type { EnginePort, KineticsPort, PositionReadablePort, VectorReadablePort } from "./ports";
+import type {
+  EnginePort,
+  KineticsPort,
+  PositionReadablePort,
+  SnapshotPort,
+  VectorReadablePort,
+} from "./ports";
 
 type EngineResult = {
   position: number;
@@ -23,11 +29,11 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
   private engines: EnginePort[] = [];
 
   constructor(
-    absolute: Readonly<[number, number]> | Readonly<number[]> | number[],
+    init: Readonly<[number, number]> | Readonly<number[]> | number[],
     options: Options = {},
   ) {
-    this._state.ndim = absolute.length;
-    this._state.absolute = [...absolute];
+    this._state.ndim = init.length;
+    this._state.absolute = [...init];
     this._state.relative = new Array(this._state.ndim).fill(0);
     this._state.velocity = new Array(this._state.ndim).fill(0);
     this.setEngine(options.engine ?? new SpringEngine());
@@ -93,6 +99,21 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
   private engineAt(n: number): EnginePort {
     return this.engines[n] ?? this.engines[this.engines.length - 1];
   }
+
+  /**
+   * 基準としている初期座標を再基準化します。
+   * relative をシフトして新しい初期座標に合わせます。
+   * absolute、velocity、energy は保持されます。
+   * @param newInit 新しい初期座標
+   */
+  protected teleport(newInit: readonly number[]): void {
+    const ndim = Math.min(newInit.length, this._state.ndim);
+    for (let i = 0; i < ndim; i++) {
+      const currentInitial = this._state.absolute[i] - this._state.relative[i];
+      const delta = newInit[i] - currentInitial;
+      this._state.relative[i] -= delta;
+    }
+  }
 }
 
 // 明示的にベクトル[0, 1]を[x, y]のPositionとしてKineticsを利用するクラス。
@@ -107,6 +128,45 @@ export class PositionKinetics extends Kinetics implements PositionReadablePort {
   public position(): Readonly<[number, number]> {
     const [x, y] = this.vector();
     return [x, y];
+  }
+}
+
+/**
+ * 初期座標が変更される Kinetics。
+ * このインスタンスをTargetに登録するか、 コンストラクタで渡す vector をTargetに登録してください。
+ */
+export class TeleportKinetics extends Kinetics {
+  // 初期座標 vector 。
+  private readonly _vector: VectorReadablePort;
+  // 現在の初期座標
+  // snaphot時かcompute時に比較され、変更がある場合teleportされます。
+  // いずれで変更されてもsnapshotが正しい限りteleportは正常に動作します。
+  private _currentInit: Readonly<number[]> = [];
+  private readonly _dependencies: SnapshotPort[];
+
+  constructor(vector: VectorReadablePort, options: Options = {}) {
+    super(vector.vector(), options);
+    this._vector = vector;
+    this._currentInit = vector.vector();
+    this._dependencies = [vector];
+  }
+
+  public compute(dt: number, vector: Readonly<number[]>): void {
+    this.updateCurrent();
+    super.compute(dt, vector);
+  }
+  public snapshot(): void {
+    this.updateCurrent();
+    super.snapshot();
+  }
+  public dependencies(): SnapshotPort[] {
+    return this._dependencies;
+  }
+  private updateCurrent() {
+    const next = this._vector.vector();
+    if (this._currentInit === next) return;
+    super.teleport(next);
+    this._currentInit = next;
   }
 }
 

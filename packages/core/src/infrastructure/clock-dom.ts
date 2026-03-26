@@ -343,7 +343,11 @@ export class WindowResizeTriggerClock
       this._snapshot.trigger = 0;
       return;
     }
-    this._snapshot = this.state;
+    this._snapshot = {
+      trigger: 1,
+      width: this.state.width,
+      height: this.state.height,
+    };
     this.state = { trigger: 0 };
   }
   public get trigger() {

@@ -33,7 +33,8 @@ export class VectorComposer implements VectorReadablePort {
 }
 
 export class VectorAdapter implements VectorReadablePort {
-  private value: () => number[];
+  private value: () => [number];
+  private _snapshot: [number];
   constructor(
     private source:
       | GateReadablePort
@@ -49,10 +50,16 @@ export class VectorAdapter implements VectorReadablePort {
           : "trigger" in source
             ? () => [source.trigger]
             : () => [source.scalar];
+    this._snapshot = this.value();
   }
-  public snapshot(): void {}
+  public snapshot(): void {
+    const value = this.value();
+    if (this._snapshot[0] !== value[0]) {
+      this._snapshot = value;
+    }
+  }
   public vector(): Readonly<number[]> {
-    return this.value();
+    return this._snapshot;
   }
   public dependencies(): SnapshotPort[] {
     return [this.source];
