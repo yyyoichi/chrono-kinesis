@@ -1,6 +1,7 @@
 import type { PositionReadablePort, SizeReadablePort, VectorReadablePort } from "../domain/ports";
 import type { DomPhysicsSource } from "./contracts/dom-physics-source";
 
+/**@deprecated APIリクエストが多重のため。より高効率な ElementLayoutRect を利用する。 */
 export class DomSource
   implements VectorReadablePort, PositionReadablePort, SizeReadablePort, DomPhysicsSource
 {
