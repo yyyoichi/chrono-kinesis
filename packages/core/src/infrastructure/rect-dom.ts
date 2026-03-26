@@ -80,7 +80,7 @@ export class ParentSwitchedLayoutRect
     private readonly trueParent: Pick<Node, "appendChild">,
     private readonly falseParent: Pick<Node, "appendChild">,
   ) {
-    const currentParent = element.parentElement;
+    const currentParent = element.parentNode;
     if (currentParent === trueParent) {
       this.state = 1;
     } else if (currentParent === falseParent) {
