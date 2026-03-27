@@ -57,39 +57,48 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   const containerEl = document.getElementById("drag-to-region-container")!;
   const regionEl = document.getElementById("drag-to-region-region")!;
   const boxEl = document.getElementById("drag-to-region-box")!;
-  const windoowResizeTriggerClock = new WindowResizeTriggerClock();
-  const regionPosition = new ElementRect(regionEl, {
+  const windowResizeTriggerClock = new WindowResizeTriggerClock();
+  // ドラッグ先矩形。windowリサイズ時に座標を再計測します。
+  const regionRect = new ElementRect(regionEl, {
     space: "padding-box",
-    trigger: windoowResizeTriggerClock,
+    trigger: windowResizeTriggerClock,
   });
-  const downGateClock = new PrimaryPointerDownGateClock(boxEl);
+  // マウスポインター
+  const pointerDownGateClock = new PrimaryPointerDownGateClock(boxEl);
   const pointerPositionClock = new PrimaryPointerPositionClock(containerEl, {
-    gate: downGateClock,
-    initPosition: downGateClock,
+    gate: pointerDownGateClock,
+    initPosition: pointerDownGateClock,
   });
+  // ポインターの位置がリージョン内にあるかどうかを判定するゲート。
   const inRegionGate = new PositionInRegionGate(
-    pointerPositionClock, // ポインターの位置が、
-    // リージョン内にあるかどうかを判定するゲートです。
-    regionPosition,
-    regionPosition,
+    pointerPositionClock,
+    regionRect,
+    regionRect,
   );
+  // 追従する矩形。inRegionGateが1のときはregionElを親要素に、0のときはcontainerElを親要素にして座標を取得します。
   const boxRect = new ParentSwitchedRect(
     boxEl,
     inRegionGate,
     regionEl,
     containerEl,
-    { space: "padding-box" },
+    {
+      space: "padding-box",
+      // ウィンドウリサイズ時に座標を再計測します。
+      trigger: windowResizeTriggerClock,
+      // マウスがdownしているときにのみ切替を許可します。
+      switchGate: pointerDownGateClock,
+    },
   );
 
   // ポインターに追従するシミュレーション。
   simulation.add({
     clock: new ClockComposer(
-      downGateClock,
+      pointerDownGateClock,
       pointerPositionClock,
-      new WindowResizeTriggerClock(),
+      windowResizeTriggerClock,
     ),
     target: new GateConditionalVector(
-      downGateClock,
+      pointerDownGateClock,
       new CenterAlignedPosition(pointerPositionClock, boxRect),
       boxRect,
     ),
