@@ -147,9 +147,9 @@ export class ParentSwitchedRect
 
     // triggerが発火している場合は座標更新のみ行います。
     if (triggered) {
-      const potision = this.readPosition(this.element);
-      if (this._snapshot[0] === potision[0] && this._snapshot[1] === potision[1]) return;
-      this._snapshot = potision;
+      const position = this.readPosition(this.element);
+      if (this._snapshot[0] === position[0] && this._snapshot[1] === position[1]) return;
+      this._snapshot = position;
       return;
     }
   }
