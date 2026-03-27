@@ -5,30 +5,24 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 
 <div {...Astro.props}>
   <div
-    id="drag-to-region-box"
-    style="position: relative; width: 100%; height: 100%;"
+    id="drag-to-region-container"
+    style="position: relative; display: flex; justify-content: flex-end; width: 100%; height: 100%; touch-action: none;"
   >
-    <!-- ゴースト。ポインターの位置によって配置が変わります。 -->
+    <!-- ドラッグされるボックス  -->
     <div
-      id="drag-to-region-pointer-ghost"
-      style="position: absolute; top: 0; left: 0; opacity: 0; z-index: -1; width: 4rem; height: 4rem; margin: 0;"
-    >
-    </div>
-    <!-- ユーザに見えているブロック。ポインターに追従します。 -->
-    <div
-      id="drag-to-region-pointer"
-      style="position: absolute; top: 0; left: 0; opacity: 1; z-index: 10; touch-action: none; width: 4rem; height: 4rem; margin: 0; background-color: cadetblue"
+      id="drag-to-region-box"
+      style="position: absolute; top: 0; left: 0; width: 4rem; height: 4rem; margin: 0; touch-action: none; background-color: cadetblue;"
     >
     </div>
     <!-- ドラッグエリア（リージョン） -->
     <div
-      style="position: absolute; top: 0; left: 50%; z-index: 5; display:flex; width: 50%; height: 100%; margin: 0; border: 1rem lightgray dashed;"
+      style="width: 50%; height: 100%; margin: 0; border: 1rem lightgray dashed;"
     >
       <div
         id="drag-to-region-region"
-        style="width: 100%; height: auto; margin: 0;"
+        style="position: relative; width: 100%; height: 100%; margin: 0;"
       >
-        <!-- ここにゴーストが配置されます。 -->
+        <!-- ここにボックスが配置されます。 -->
       </div>
     </div>
   </div>
@@ -43,82 +37,76 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     DomSource,
     DomVisualizer,
     GateConditionalVector,
-    PositionKinetics,
-    KineticsTransitionObserver,
     PositionInRegionGate,
     PrimaryPointerDownGateClock,
     PrimaryPointerPositionClock,
     SpringEngine,
-    DirectEngine,
-    Kinetics,
-    VectorAdapter,
+    TeleportKinetics,
+    ElementRect,
+    ParentSwitchedRect,
+    WindowResizeTriggerClock,
   } from "@yyyoichi/chrono-kinesis";
 
   // 1. ドラッグ開始
-  // 2. ドラッグ中->ポインターをドラッグ位置に追従させる
-  // 3. ポインターがリージョンを跨いだらゴーストを移動させる
-  // 4. ドロップ終了->ゴースト位置にポインターを移動させる
+  // 2. ドラッグ中->ボックスをドラッグ座標に追従させる
+  // 3. ポインターがリージョンを跨いだらボックスを移動（appendChild）させる
+  // 4. ドロップ終了->本来のボックスの描画座標（padding-box）に移動させる
 
   const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
 
+  const containerEl = document.getElementById("drag-to-region-container")!;
+  const regionEl = document.getElementById("drag-to-region-region")!;
   const boxEl = document.getElementById("drag-to-region-box")!;
-  const pointerEl = document.getElementById("drag-to-region-pointer")!;
-  const pointerSource = new DomSource(pointerEl);
-  const ghostEl = document.getElementById("drag-to-region-pointer-ghost")!;
-  const ghostSource = new DomSource(ghostEl);
-
-  const downGateClock = new PrimaryPointerDownGateClock(pointerEl);
-  const pointerPositionClock = new PrimaryPointerPositionClock(boxEl, {
-    gate: downGateClock,
-    initPosition: downGateClock,
+  const windowResizeTriggerClock = new WindowResizeTriggerClock();
+  // ドラッグ先矩形。windowリサイズ時に座標を再計測します。
+  const regionRect = new ElementRect(regionEl, {
+    space: "padding-box",
+    trigger: windowResizeTriggerClock,
   });
-
-  const target = new GateConditionalVector(
-    downGateClock,
-    new CenterAlignedPosition(pointerPositionClock, pointerSource),
-    ghostSource, // ドラッグしていないときはゴーストの位置をターゲットとします。
+  // マウスポインター
+  const pointerDownGateClock = new PrimaryPointerDownGateClock(boxEl);
+  const pointerPositionClock = new PrimaryPointerPositionClock(containerEl, {
+    gate: pointerDownGateClock,
+    initPosition: pointerDownGateClock,
+  });
+  // ポインターの位置がリージョン内にあるかどうかを判定するゲート。
+  const inRegionGate = new PositionInRegionGate(
+    pointerPositionClock,
+    regionRect,
+    regionRect,
   );
+  // 追従する矩形。inRegionGateが1のときはregionElを親要素に、0のときはcontainerElを親要素にして座標を取得します。
+  const boxRect = new ParentSwitchedRect(
+    boxEl,
+    inRegionGate,
+    regionEl,
+    containerEl,
+    {
+      space: "padding-box",
+      // ウィンドウリサイズ時に座標を再計測します。
+      trigger: windowResizeTriggerClock,
+      // マウスがdownしているときにのみ切替を許可します。
+      switchGate: pointerDownGateClock,
+    },
+  );
+
   // ポインターに追従するシミュレーション。
   simulation.add({
-    clock: new ClockComposer(downGateClock, pointerPositionClock),
-    target: target,
-    kinetics: new PositionKinetics(target.vector(), {
+    clock: new ClockComposer(
+      pointerDownGateClock,
+      pointerPositionClock,
+      windowResizeTriggerClock,
+    ),
+    target: new GateConditionalVector(
+      pointerDownGateClock,
+      new CenterAlignedPosition(pointerPositionClock, boxRect),
+      boxRect,
+    ),
+    kinetics: new TeleportKinetics(boxRect, {
       engine: new SpringEngine({ settleMs: 800, zeta: 0.7 }),
     }),
-    physics: new DomPhysics(pointerSource, new DomVisualizer()),
+    physics: new DomPhysics(new DomSource(boxEl), new DomVisualizer()),
   });
-
-  // ゴースト位置をトグルします。
-  const regionEl = document.getElementById("drag-to-region-region")!;
-  const regionSource = new DomSource(regionEl);
-  const inRegionGate = new PositionInRegionGate(
-    pointerPositionClock, // ポインターの位置が、
-    // リージョン内にあるかどうかを判定するゲートです。
-    regionSource,
-    regionSource,
-  );
-  const regionKinetics = new Kinetics([inRegionGate.gate], {
-    engine: new DirectEngine(),
-  });
-  const regionObserver = new KineticsTransitionObserver(regionKinetics);
-  simulation.add({
-    clock: pointerPositionClock,
-    target: new VectorAdapter(inRegionGate), // ゲートを直接ベクトルとして扱います。
-    kinetics: regionKinetics,
-    physics: [],
-    phaseObservers: [regionObserver],
-  });
-  // リージョンの内外でゴーストの親要素を切り替えます。
-  regionObserver.subscribe("start", () => {
-    if (inRegionGate.gate) {
-      // 元の親から外してregionSourceの子にする
-      regionEl.appendChild(ghostEl);
-    } else {
-      // リージョン外に出たら再びboxElの子にします。
-      boxEl.appendChild(ghostEl);
-    }
-  });
-
   simulation.run();
 
   window.addEventListener("beforeunload", () => {
