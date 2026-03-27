@@ -163,7 +163,7 @@ export class TeleportKinetics extends Kinetics {
     return this._dependencies;
   }
   private updateCurrent() {
-    const next = this._vector.vector();
+    const next = this._vector?.vector();
     if (this._currentInit === next) return;
     super.teleport(next);
     this._currentInit = next;
