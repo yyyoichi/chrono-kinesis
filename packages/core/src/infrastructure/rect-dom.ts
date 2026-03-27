@@ -79,6 +79,8 @@ type ParentSwitchedRectOption = {
   trigger?: TriggerReadablePort;
   // 座標・サイズをどの取得空間で扱うかを指定します。
   space?: ElementRectSpace;
+  // gate=1のときにのみ座標を更新するオプション。これを有効にすると、gateが0のときは要素は切り替えられません。
+  switchGate?: GateReadablePort;
 };
 
 /**Gateに従ってelementの親要素を切り替えます。
@@ -93,6 +95,7 @@ export class ParentSwitchedRect
   private state: 0 | 1; // 0: falseParentの子, 1: trueParentの子
   private readonly readPosition: ElementTupleReader;
   private readonly trigger: TriggerReadablePort | null = null; // 座標更新トリガー
+  private readonly switchGate: GateReadablePort | null = null; // 座標更新の条件となるゲート
   private readonly _dependencies: SnapshotPort[];
   constructor(
     private readonly element: HTMLElement,
@@ -118,23 +121,37 @@ export class ParentSwitchedRect
       this.trigger = options.trigger;
       this._dependencies.push(options.trigger);
     }
+    if (options.switchGate) {
+      this.switchGate = options.switchGate;
+      this._dependencies.push(options.switchGate);
+    }
     this.snapshot();
   }
   public snapshot(): void {
     const current = this.state;
     const next = this.gate.gate;
+    const requiredSwitch = current !== next;
+    // Switchを許可するかどうか。switchGateが未指定の場合は常に許可します。
+    const enabledSwitch = this.switchGate === null || this.switchGate.gate === 1;
     const triggered = this.trigger?.trigger === 1;
-    if (!triggered && current === next) return;
+
+    // Switchが必要で、かつ許可されている場合は親要素を切り替えて座標を更新します。
+    if (requiredSwitch && enabledSwitch) {
+      // 親要素を切り替えて座標更新
+      this.state = next;
+      // 要素を切り替えてから座標を取得します。
+      this._switch();
+      this._snapshot = this.readPosition(this.element);
+      return;
+    }
+
+    // triggerが発火している場合は座標更新のみ行います。
     if (triggered) {
       const potision = this.readPosition(this.element);
       if (this._snapshot[0] === potision[0] && this._snapshot[1] === potision[1]) return;
       this._snapshot = potision;
       return;
     }
-    this.state = next;
-    // 要素を切り替えてから座標を取得します。
-    this._switch();
-    this._snapshot = this.readPosition(this.element);
   }
 
   public position(): Readonly<[number, number]> {
