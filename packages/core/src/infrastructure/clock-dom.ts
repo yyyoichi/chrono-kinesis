@@ -552,11 +552,15 @@ export class PrimaryPointerDownGateClock
     this.subscriptionElement.addEventListener("pointerup", this.onPointerUp, {
       passive: true,
     });
+    this.subscriptionElement.addEventListener("lostpointercapture", this.onPointerUp, {
+      passive: true,
+    });
   }
   public destroy() {
     this.subscriptionElement.removeEventListener("pointerdown", this.onPointerDown);
     this.subscriptionElement.removeEventListener("pointercancel", this.onPointerUp);
     this.subscriptionElement.removeEventListener("pointerup", this.onPointerUp);
+    this.subscriptionElement.removeEventListener("lostpointercapture", this.onPointerUp);
   }
   public snapshot() {
     this._snapshot.gate = this.state.gate;
