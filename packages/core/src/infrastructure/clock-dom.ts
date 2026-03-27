@@ -511,6 +511,7 @@ export class PrimaryPointerDownGateClock
   };
   private onPointerDown = (e: PointerEvent) => {
     if (!e.isPrimary) return;
+    if (this.state.gate === 1) return;
     this.state = {
       gate: 1,
       position: [e.clientX + window.scrollX, e.clientY + window.scrollY],
@@ -523,6 +524,7 @@ export class PrimaryPointerDownGateClock
   };
   private onPointerUp = (e: PointerEvent) => {
     if (!e.isPrimary) return;
+    if (this.state.gate === 0) return;
     this.state = {
       gate: 0,
       position: [e.clientX + window.scrollX, e.clientY + window.scrollY],
@@ -535,6 +537,20 @@ export class PrimaryPointerDownGateClock
       el.releasePointerCapture?.(e.pointerId);
     }
     this._heartbeat();
+  };
+  private onLostPointerCapture = (e: PointerEvent) => {
+    if (!e.isPrimary) return;
+    if (this.state.gate === 0) return;
+    // 原則pointerupイベントでpointer captureをリリースする。
+    // caputreが解除されたら、明示的にupされていない限り再captureする。
+    const el = this.subscriptionElement as unknown as {
+      setPointerCapture?: (pointerId: number) => void;
+      hasPointerCapture?: (pointerId: number) => boolean;
+    };
+    // NOTE: touch系は挙動が不安定のため一旦再captureしない。
+    if (!el.hasPointerCapture?.(e.pointerId) && e.pointerType !== "touch") {
+      el.setPointerCapture?.(e.pointerId);
+    }
   };
   constructor(
     private subscriptionElement: Pick<
@@ -552,7 +568,7 @@ export class PrimaryPointerDownGateClock
     this.subscriptionElement.addEventListener("pointerup", this.onPointerUp, {
       passive: true,
     });
-    this.subscriptionElement.addEventListener("lostpointercapture", this.onPointerUp, {
+    this.subscriptionElement.addEventListener("lostpointercapture", this.onLostPointerCapture, {
       passive: true,
     });
   }
@@ -560,7 +576,7 @@ export class PrimaryPointerDownGateClock
     this.subscriptionElement.removeEventListener("pointerdown", this.onPointerDown);
     this.subscriptionElement.removeEventListener("pointercancel", this.onPointerUp);
     this.subscriptionElement.removeEventListener("pointerup", this.onPointerUp);
-    this.subscriptionElement.removeEventListener("lostpointercapture", this.onPointerUp);
+    this.subscriptionElement.removeEventListener("lostpointercapture", this.onLostPointerCapture);
   }
   public snapshot() {
     this._snapshot.gate = this.state.gate;
