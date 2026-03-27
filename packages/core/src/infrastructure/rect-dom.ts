@@ -111,7 +111,7 @@ export class ParentSwitchedRect
     this._dependencies = [gate];
     this.readPosition = getPositionReader(options.space ?? "padding-box");
     this._snapshot = this.readPosition(element);
-    this._size = [element.offsetWidth, element.offsetHeight];
+    this._size = readElementSize(element, options.space ?? "padding-box");
     this.snapshot();
   }
   public snapshot(): void {
