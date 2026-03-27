@@ -57,7 +57,11 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   const containerEl = document.getElementById("drag-to-region-container")!;
   const regionEl = document.getElementById("drag-to-region-region")!;
   const boxEl = document.getElementById("drag-to-region-box")!;
-  const regionPosition = new ElementRect(regionEl);
+  const windoowResizeTriggerClock = new WindowResizeTriggerClock();
+  const regionPosition = new ElementRect(regionEl, {
+    space: "padding-box",
+    trigger: windoowResizeTriggerClock,
+  });
   const downGateClock = new PrimaryPointerDownGateClock(boxEl);
   const pointerPositionClock = new PrimaryPointerPositionClock(containerEl, {
     gate: downGateClock,
@@ -69,7 +73,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     regionPosition,
     regionPosition,
   );
-  const boxLayoutRect = new ParentSwitchedRect(
+  const boxRect = new ParentSwitchedRect(
     boxEl,
     inRegionGate,
     regionEl,
@@ -86,10 +90,10 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     ),
     target: new GateConditionalVector(
       downGateClock,
-      new CenterAlignedPosition(pointerPositionClock, boxLayoutRect),
-      boxLayoutRect,
+      new CenterAlignedPosition(pointerPositionClock, boxRect),
+      boxRect,
     ),
-    kinetics: new TeleportKinetics(boxLayoutRect, {
+    kinetics: new TeleportKinetics(boxRect, {
       engine: new SpringEngine({ settleMs: 800, zeta: 0.7 }),
     }),
     physics: new DomPhysics(new DomSource(boxEl), new DomVisualizer()),
