@@ -68,15 +68,15 @@ export class ElementRect implements VectorReadablePort, PositionReadablePort, Si
 
   /**座標に更新があれば_snapshotを更新します */
   private update() {
-    const [nextX, nextY] = this.readPosition(this.element);
-    if (this._snapshot[0] !== nextX || this._snapshot[1] !== nextY) {
-      this._snapshot[0] = nextX;
-      this._snapshot[1] = nextY;
-    }
+    const position = this.readPosition(this.element);
+    if (position[0] === this._snapshot[0] && position[1] === this._snapshot[1]) return;
+    this._snapshot = position;
   }
 }
 
 type ParentSwitchedRectOption = {
+  // 座標更新のトリガー。trigger が 1 のときに座標を更新します。
+  trigger?: TriggerReadablePort;
   // 座標・サイズをどの取得空間で扱うかを指定します。
   space?: ElementRectSpace;
 };
@@ -92,6 +92,7 @@ export class ParentSwitchedRect
   private readonly _size: [number, number]; // 固定値
   private state: 0 | 1; // 0: falseParentの子, 1: trueParentの子
   private readonly readPosition: ElementTupleReader;
+  private readonly trigger: TriggerReadablePort | null = null; // 座標更新トリガー
   private readonly _dependencies: SnapshotPort[];
   constructor(
     private readonly element: HTMLElement,
@@ -112,12 +113,24 @@ export class ParentSwitchedRect
     this.readPosition = getPositionReader(options.space ?? "padding-box");
     this._snapshot = this.readPosition(element);
     this._size = readElementSize(element, options.space ?? "padding-box");
+
+    if (options.trigger) {
+      this.trigger = options.trigger;
+      this._dependencies.push(options.trigger);
+    }
     this.snapshot();
   }
   public snapshot(): void {
     const current = this.state;
     const next = this.gate.gate;
-    if (current === next) return;
+    const triggered = this.trigger?.trigger === 1;
+    if (!triggered && current === next) return;
+    if (triggered) {
+      const potision = this.readPosition(this.element);
+      if (this._snapshot[0] === potision[0] && this._snapshot[1] === potision[1]) return;
+      this._snapshot = potision;
+      return;
+    }
     this.state = next;
     // 要素を切り替えてから座標を取得します。
     this._switch();
