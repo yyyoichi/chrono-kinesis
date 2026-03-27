@@ -490,6 +490,11 @@ export class MousePositionClock
   }
 }
 
+type PrimaryPointerDownGateClockOption = {
+  // pointerdown後、要素外でのpointerupイベントを拾うかどうか。デフォルトで拾います。
+  useCapture?: boolean;
+};
+
 // ポインターがDownしている間はGate=1になるClock
 export class PrimaryPointerDownGateClock
   extends BaseClock
@@ -509,6 +514,7 @@ export class PrimaryPointerDownGateClock
     gate: 0,
     position: [0, 0],
   };
+  private useCapture: boolean = true;
   private onPointerDown = (e: PointerEvent) => {
     if (!e.isPrimary) return;
     if (this.state.gate === 1) return;
@@ -516,10 +522,12 @@ export class PrimaryPointerDownGateClock
       gate: 1,
       position: [e.clientX + window.scrollX, e.clientY + window.scrollY],
     };
-    const el = this.subscriptionElement as unknown as {
-      setPointerCapture?: (pointerId: number) => void;
-    };
-    el.setPointerCapture?.(e.pointerId);
+    if (this.useCapture) {
+      const el = this.subscriptionElement as unknown as {
+        setPointerCapture?: (pointerId: number) => void;
+      };
+      el.setPointerCapture?.(e.pointerId);
+    }
     this._heartbeat();
   };
   private onPointerUp = (e: PointerEvent) => {
@@ -529,12 +537,14 @@ export class PrimaryPointerDownGateClock
       gate: 0,
       position: [e.clientX + window.scrollX, e.clientY + window.scrollY],
     };
-    const el = this.subscriptionElement as unknown as {
-      releasePointerCapture?: (pointerId: number) => void;
-      hasPointerCapture?: (pointerId: number) => boolean;
-    };
-    if (el.hasPointerCapture?.(e.pointerId)) {
-      el.releasePointerCapture?.(e.pointerId);
+    if (this.useCapture) {
+      const el = this.subscriptionElement as unknown as {
+        releasePointerCapture?: (pointerId: number) => void;
+        hasPointerCapture?: (pointerId: number) => boolean;
+      };
+      if (el.hasPointerCapture?.(e.pointerId)) {
+        el.releasePointerCapture?.(e.pointerId);
+      }
     }
     this._heartbeat();
   };
@@ -557,8 +567,12 @@ export class PrimaryPointerDownGateClock
       HTMLElement,
       "addEventListener" | "removeEventListener"
     > = window,
+    options: PrimaryPointerDownGateClockOption = {},
   ) {
     super();
+    if (typeof options.useCapture === "boolean") {
+      this.useCapture = options.useCapture;
+    }
     this.subscriptionElement.addEventListener("pointerdown", this.onPointerDown, {
       passive: true,
     });
@@ -568,15 +582,19 @@ export class PrimaryPointerDownGateClock
     this.subscriptionElement.addEventListener("pointerup", this.onPointerUp, {
       passive: true,
     });
-    this.subscriptionElement.addEventListener("lostpointercapture", this.onLostPointerCapture, {
-      passive: true,
-    });
+    if (this.useCapture) {
+      this.subscriptionElement.addEventListener("lostpointercapture", this.onLostPointerCapture, {
+        passive: true,
+      });
+    }
   }
   public destroy() {
     this.subscriptionElement.removeEventListener("pointerdown", this.onPointerDown);
     this.subscriptionElement.removeEventListener("pointercancel", this.onPointerUp);
     this.subscriptionElement.removeEventListener("pointerup", this.onPointerUp);
-    this.subscriptionElement.removeEventListener("lostpointercapture", this.onLostPointerCapture);
+    if (this.useCapture) {
+      this.subscriptionElement.removeEventListener("lostpointercapture", this.onLostPointerCapture);
+    }
   }
   public snapshot() {
     this._snapshot.gate = this.state.gate;
