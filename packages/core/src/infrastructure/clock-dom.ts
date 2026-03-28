@@ -515,7 +515,8 @@ export class PrimaryPointerDownGateClock
     position: [0, 0],
   };
   private useCapture: boolean = true;
-  private onPointerDown = (e: PointerEvent) => {
+  private onPointerDown = (e: Event) => {
+    if (!(e instanceof PointerEvent)) return;
     if (!e.isPrimary) return;
     if (this.state.gate === 1) return;
     this.state = {
@@ -530,7 +531,8 @@ export class PrimaryPointerDownGateClock
     }
     this._heartbeat();
   };
-  private onPointerUp = (e: PointerEvent) => {
+  private onPointerUp = (e: Event) => {
+    if (!(e instanceof PointerEvent)) return;
     if (!e.isPrimary) return;
     if (this.state.gate === 0) return;
     this.state = {
@@ -548,7 +550,8 @@ export class PrimaryPointerDownGateClock
     }
     this._heartbeat();
   };
-  private onLostPointerCapture = (e: PointerEvent) => {
+  private onLostPointerCapture = (e: Event) => {
+    if (!(e instanceof PointerEvent)) return;
     if (!e.isPrimary) return;
     if (this.state.gate === 0) return;
     // 原則pointerupイベントでpointer captureをリリースする。
@@ -563,10 +566,7 @@ export class PrimaryPointerDownGateClock
     }
   };
   constructor(
-    private subscriptionElement: Pick<
-      HTMLElement,
-      "addEventListener" | "removeEventListener"
-    > = window,
+    private subscriptionElement: EventTarget = window,
     options: PrimaryPointerDownGateClockOption = {},
   ) {
     super();
@@ -631,7 +631,8 @@ export class PrimaryPointerPositionClock
   private shouldListening: () => boolean = () => true;
   private initPosition?: PositionReadablePort;
   private _dependencies: SnapshotPort[] = [];
-  private onPointerMove = (e: PointerEvent) => {
+  private onPointerMove = (e: Event) => {
+    if (!(e instanceof PointerEvent)) return;
     if (!e.isPrimary) return;
     const { clientX, clientY } = e;
     this.state.mode = "received";
@@ -639,10 +640,7 @@ export class PrimaryPointerPositionClock
     this._heartbeat();
   };
   constructor(
-    private subscriptionElement: Pick<
-      HTMLElement,
-      "addEventListener" | "removeEventListener"
-    > = window,
+    private subscriptionElement: EventTarget = window,
     options: PrimaryPointerPositionClockOption = {},
   ) {
     super();
