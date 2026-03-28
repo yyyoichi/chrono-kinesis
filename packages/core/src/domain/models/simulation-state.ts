@@ -3,4 +3,5 @@ export interface SimulationState {
   absolute: number[];
   relative: number[];
   velocity: number[];
+  activityLevel: number;
 }
