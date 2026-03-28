@@ -18,12 +18,12 @@ type Options = {
 
 export class Kinetics implements KineticsPort, VectorReadablePort {
   private static ACTIVITY_THRESHOLD = 0.001;
-  private _energy = 0;
   private _state: SimulationState = {
     ndim: 0,
     absolute: [],
     relative: [],
     velocity: [],
+    activityLevel: 0,
   };
   private _snapshot: number[] = [];
   private engines: EnginePort[] = [];
@@ -61,7 +61,7 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
 
     const distance = Math.sqrt(distanceSquared);
     const velocity = Math.hypot(...this._state.velocity);
-    this._energy = distance + velocity;
+    this.state.activityLevel = distance + velocity;
   }
 
   public vector(): Readonly<number[]> {
@@ -73,14 +73,14 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
   }
 
   public isActive() {
-    return this._energy > Kinetics.ACTIVITY_THRESHOLD;
+    return this._state.activityLevel > Kinetics.ACTIVITY_THRESHOLD;
   }
 
   public get state() {
     return this._state;
   }
   public get activityScore() {
-    return this._energy;
+    return this._state.activityLevel;
   }
 
   public setEngine(engine: EnginePort | EnginePort[]) {
