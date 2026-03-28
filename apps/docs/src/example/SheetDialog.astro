@@ -33,13 +33,13 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   import {
     DefaultSimulatorService,
     DialogGateClock,
+    DialogSilentClosePhysics,
     DomPhysics,
     DomSource,
     DomVisualizer,
     FixedPosition,
     GateConditionalVector,
     Kinetics,
-    KineticsTransitionObserver,
     OffsetPosition,
     SpringEngine,
   } from "@yyyoichi/chrono-kinesis";
@@ -56,24 +56,23 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 
   // 初期値は画面外。Open(gate=1)で、画面内に移動。
   const closedPosition = new FixedPosition(dialogSrc.position());
-  const target = new GateConditionalVector(
-    dialogGateClock,
-    new OffsetPosition(closedPosition, -300),
-    closedPosition,
-  );
-  const kinetics = new Kinetics(dialogSrc.position(), {
-    engine: new SpringEngine({ settleMs: 400, zeta: 0.7 }),
-  });
-  const kineticsObserver = new KineticsTransitionObserver(kinetics, {
-    stopThreshold: 80,
-  });
 
   simulation.add({
     clock: dialogGateClock,
-    target: target,
-    kinetics: kinetics,
-    physics: new DomPhysics(dialogSrc, new DomVisualizer()),
-    phaseObservers: [kineticsObserver],
+    target: new GateConditionalVector(
+      dialogGateClock,
+      new OffsetPosition(closedPosition, -300),
+      closedPosition,
+    ),
+    kinetics: new Kinetics(dialogSrc.position(), {
+      engine: new SpringEngine({ settleMs: 400, zeta: 0.7 }),
+    }),
+    physics: [
+      new DomPhysics(dialogSrc, new DomVisualizer()),
+      new DialogSilentClosePhysics(dialogGateClock, {
+        stopThreshold: 80,
+      }),
+    ],
   });
 
   // add Event
@@ -85,12 +84,6 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   const closeButton = document.getElementById("sheet-dialog-close-button")!;
   openButton.addEventListener("click", openEvent);
   closeButton.addEventListener("click", closeEvent);
-  kineticsObserver.subscribe("stop", () => {
-    if (dialogGateClock.gate === 0) {
-      // Gateが終了（requestCloseされ0になったあとに）実際を閉じる。
-      dialogGateClock.silentClose();
-    }
-  });
   simulation.run();
 
   window.addEventListener("beforeunload", () => {

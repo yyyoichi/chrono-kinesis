@@ -43,8 +43,9 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     SpringEngine,
     TeleportKinetics,
     ElementRect,
-    ParentSwitchedRect,
     WindowResizeTriggerClock,
+    ParentSwitchTrigger,
+    TriggerReducer,
   } from "@yyyoichi/chrono-kinesis";
 
   // 1. ドラッグ開始
@@ -75,20 +76,27 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     regionRect,
     regionRect,
   );
-  // 追従する矩形。inRegionGateが1のときはregionElを親要素に、0のときはcontainerElを親要素にして座標を取得します。
-  const boxRect = new ParentSwitchedRect(
+  // inRegionGateが1のときはregionElを親要素に、0のときはcontainerElを親要素にして座標を取得します。
+  const parentSwitchedTrigger = new ParentSwitchTrigger(
     boxEl,
     inRegionGate,
     regionEl,
     containerEl,
     {
-      space: "padding-box",
-      // ウィンドウリサイズ時に座標を再計測します。
-      trigger: windowResizeTriggerClock,
       // マウスがdownしているときにのみ切替を許可します。
       switchGate: pointerDownGateClock,
     },
   );
+  // 追従する矩形。
+  const boxRect = new ElementRect(boxEl, {
+    space: "padding-box",
+    // ウィンドウリサイズ時と親要素切替時に座標を再計測します。
+    trigger: new TriggerReducer(
+      "OR",
+      windowResizeTriggerClock,
+      parentSwitchedTrigger,
+    ),
+  });
 
   // ポインターに追従するシミュレーション。
   simulation.add({
