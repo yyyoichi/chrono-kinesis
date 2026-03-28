@@ -17,7 +17,7 @@ type Options = {
 };
 
 export class Kinetics implements KineticsPort, VectorReadablePort {
-  private static ACTIVITY_THRESHOLD = 0.001;
+  public static readonly ACTIVITY_THRESHOLD = 0.001;
   private _state: SimulationState = {
     ndim: 0,
     absolute: [],
