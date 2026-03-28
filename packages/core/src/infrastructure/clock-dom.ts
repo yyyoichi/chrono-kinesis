@@ -490,6 +490,11 @@ export class MousePositionClock
   }
 }
 
+type PrimaryPointerDownGateClockOption = {
+  // pointerdown後、要素外でのpointerupイベントを拾うかどうか。デフォルトで拾います。
+  useCapture?: boolean;
+};
+
 // ポインターがDownしている間はGate=1になるClock
 export class PrimaryPointerDownGateClock
   extends BaseClock
@@ -509,40 +514,77 @@ export class PrimaryPointerDownGateClock
     gate: 0,
     position: [0, 0],
   };
-  private onPointerDown = (e: PointerEvent) => {
+  private useCapture: boolean = true;
+  private onPointerDown = (e: Event) => {
+    if (!(e instanceof PointerEvent)) return;
     if (!e.isPrimary) return;
+    if (this.state.gate === 1) return;
     this.state = {
       gate: 1,
       position: [e.clientX + window.scrollX, e.clientY + window.scrollY],
     };
-    const el = this.subscriptionElement as unknown as {
-      setPointerCapture?: (pointerId: number) => void;
-    };
-    el.setPointerCapture?.(e.pointerId);
+    if (this.useCapture) {
+      const el = this.subscriptionElement as unknown as {
+        setPointerCapture?: (pointerId: number) => void;
+      };
+      el.setPointerCapture?.(e.pointerId);
+    }
     this._heartbeat();
   };
-  private onPointerUp = (e: PointerEvent) => {
+  private onPointerUp = (e: Event) => {
+    if (!(e instanceof PointerEvent)) return;
     if (!e.isPrimary) return;
+    if (this.state.gate === 0) return;
     this.state = {
       gate: 0,
       position: [e.clientX + window.scrollX, e.clientY + window.scrollY],
     };
-    const el = this.subscriptionElement as unknown as {
-      releasePointerCapture?: (pointerId: number) => void;
-      hasPointerCapture?: (pointerId: number) => boolean;
-    };
-    if (el.hasPointerCapture?.(e.pointerId)) {
-      el.releasePointerCapture?.(e.pointerId);
+    if (this.useCapture) {
+      const el = this.subscriptionElement as unknown as {
+        releasePointerCapture?: (pointerId: number) => void;
+        hasPointerCapture?: (pointerId: number) => boolean;
+      };
+      if (el.hasPointerCapture?.(e.pointerId)) {
+        el.releasePointerCapture?.(e.pointerId);
+      }
     }
     this._heartbeat();
   };
+  private onLostPointerCapture = (e: Event) => {
+    if (!(e instanceof PointerEvent)) return;
+    if (!e.isPrimary) return;
+    if (this.state.gate === 0) return;
+    // iOSでは再captureできずクラッシュするため要調査
+    if (e.pointerType === "touch") return;
+    // 原則pointerupイベントでpointer captureをリリースする。
+    // captureが解除されたら、明示的にupされていない限り再captureする。
+    const el = this.subscriptionElement as unknown as {
+      setPointerCapture?: (pointerId: number) => void;
+      hasPointerCapture?: (pointerId: number) => boolean;
+    };
+    // touch系 / 要素が切り離されている場合は再captureできないのでgateを閉じる。
+    const isConnected = el instanceof Element ? el.isConnected : true; // window等はtrue
+    if (!isConnected) {
+      this.state = { gate: 0, position: this.state.position };
+      this._heartbeat();
+      return;
+    }
+    // 再captureを試みる。pointerId失効などでDOMExceptionが発生した場合もgateを閉じる。
+    try {
+      el.setPointerCapture?.(e.pointerId);
+    } catch {
+      this.state = { gate: 0, position: this.state.position };
+      this._heartbeat();
+    }
+  };
   constructor(
-    private subscriptionElement: Pick<
-      HTMLElement,
-      "addEventListener" | "removeEventListener"
-    > = window,
+    private subscriptionElement: EventTarget = window,
+    options: PrimaryPointerDownGateClockOption = {},
   ) {
     super();
+    if (typeof options.useCapture === "boolean") {
+      this.useCapture = options.useCapture;
+    }
     this.subscriptionElement.addEventListener("pointerdown", this.onPointerDown, {
       passive: true,
     });
@@ -552,15 +594,19 @@ export class PrimaryPointerDownGateClock
     this.subscriptionElement.addEventListener("pointerup", this.onPointerUp, {
       passive: true,
     });
-    this.subscriptionElement.addEventListener("lostpointercapture", this.onPointerUp, {
-      passive: true,
-    });
+    if (this.useCapture) {
+      this.subscriptionElement.addEventListener("lostpointercapture", this.onLostPointerCapture, {
+        passive: true,
+      });
+    }
   }
   public destroy() {
     this.subscriptionElement.removeEventListener("pointerdown", this.onPointerDown);
     this.subscriptionElement.removeEventListener("pointercancel", this.onPointerUp);
     this.subscriptionElement.removeEventListener("pointerup", this.onPointerUp);
-    this.subscriptionElement.removeEventListener("lostpointercapture", this.onPointerUp);
+    if (this.useCapture) {
+      this.subscriptionElement.removeEventListener("lostpointercapture", this.onLostPointerCapture);
+    }
   }
   public snapshot() {
     this._snapshot.gate = this.state.gate;
@@ -597,7 +643,8 @@ export class PrimaryPointerPositionClock
   private shouldListening: () => boolean = () => true;
   private initPosition?: PositionReadablePort;
   private _dependencies: SnapshotPort[] = [];
-  private onPointerMove = (e: PointerEvent) => {
+  private onPointerMove = (e: Event) => {
+    if (!(e instanceof PointerEvent)) return;
     if (!e.isPrimary) return;
     const { clientX, clientY } = e;
     this.state.mode = "received";
@@ -605,10 +652,7 @@ export class PrimaryPointerPositionClock
     this._heartbeat();
   };
   constructor(
-    private subscriptionElement: Pick<
-      HTMLElement,
-      "addEventListener" | "removeEventListener"
-    > = window,
+    private subscriptionElement: EventTarget = window,
     options: PrimaryPointerPositionClockOption = {},
   ) {
     super();
