@@ -554,15 +554,27 @@ export class PrimaryPointerDownGateClock
     if (!(e instanceof PointerEvent)) return;
     if (!e.isPrimary) return;
     if (this.state.gate === 0) return;
+    // iOSでは再captureできずクラッシュするため要調査
+    if (e.pointerType === "touch") return;
     // 原則pointerupイベントでpointer captureをリリースする。
-    // caputreが解除されたら、明示的にupされていない限り再captureする。
+    // captureが解除されたら、明示的にupされていない限り再captureする。
     const el = this.subscriptionElement as unknown as {
       setPointerCapture?: (pointerId: number) => void;
       hasPointerCapture?: (pointerId: number) => boolean;
     };
-    // NOTE: touch系は挙動が不安定のため一旦再captureしない。
-    if (!el.hasPointerCapture?.(e.pointerId) && e.pointerType !== "touch") {
+    // touch系 / 要素が切り離されている場合は再captureできないのでgateを閉じる。
+    const isConnected = el instanceof Element ? el.isConnected : true; // window等はtrue
+    if (!isConnected) {
+      this.state = { gate: 0, position: this.state.position };
+      this._heartbeat();
+      return;
+    }
+    // 再captureを試みる。pointerId失効などでDOMExceptionが発生した場合もgateを閉じる。
+    try {
       el.setPointerCapture?.(e.pointerId);
+    } catch {
+      this.state = { gate: 0, position: this.state.position };
+      this._heartbeat();
     }
   };
   constructor(
