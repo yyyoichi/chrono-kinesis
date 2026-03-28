@@ -2,7 +2,6 @@ export type ActivityTransitionState = {
   current: number;
   started: boolean;
   stopped: boolean;
-  active: boolean;
 };
 
 export type ActivityTransitionOptions = {
@@ -12,10 +11,6 @@ export type ActivityTransitionOptions = {
   // 停止判定するしきい値です。
   // デフォルトで0.5に設定されます。
   stopThreshold?: number;
-  // 初期のactivity levelです。デフォルトで0です。
-  initialLevel?: number;
-  // 初期のactive状態です。未指定の場合はinitialLevelとstartThresholdから自動判定されます。
-  initialState?: "active" | "inactive";
 };
 
 /**
@@ -39,11 +34,6 @@ export class ActivityTransition {
       0,
       Number.isFinite(options.stopThreshold) ? (options.stopThreshold as number) : 0.5,
     );
-    if (this.startThreshold < this.stopThreshold) {
-      throw new Error("startThreshold must be greater than or equal to stopThreshold.");
-    }
-
-    this.reset(options.initialLevel ?? 0, options.initialState);
   }
 
   public update(level: number): ActivityTransitionState {
@@ -67,36 +57,6 @@ export class ActivityTransition {
       current: this.current,
       started,
       stopped,
-      active: this.active,
-    };
-  }
-
-  public reset(initialLevel: number = 0, initialState?: "active" | "inactive"): void {
-    if (!Number.isFinite(initialLevel)) {
-      throw new Error("initialLevel must be a finite number.");
-    }
-    const level = Math.max(0, initialLevel);
-
-    if (initialState === "active" && level < this.stopThreshold) {
-      throw new Error("initialState=active is invalid when initialLevel is below stopThreshold.");
-    }
-    if (initialState === "inactive" && level >= this.startThreshold) {
-      throw new Error(
-        "initialState=inactive is invalid when initialLevel is greater than or equal to startThreshold.",
-      );
-    }
-
-    this.current = level;
-    this.active =
-      initialState === undefined ? level >= this.startThreshold : initialState === "active";
-  }
-
-  public state(): ActivityTransitionState {
-    return {
-      current: this.current,
-      started: false,
-      stopped: false,
-      active: this.active,
     };
   }
 }
