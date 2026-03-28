@@ -542,6 +542,41 @@ export class PositionInRegionGate implements GateReadablePort {
   }
 }
 
+/**
+ * 複数のトリガーを理論演算で還元します。
+ * @param op OR...いずれかのトリガーが発火していれば trigger=1, AND...すべてのトリガーが発火していれば trigger=1
+ * @param sources 還元するトリガーの配列。sourcesが空の場合は常に trigger=0 になります。
+ */
+export class TriggerReducer implements TriggerReadablePort {
+  private readonly reduce: () => boolean;
+  private readonly _dependencies: SnapshotPort[];
+  private _snapshot: 0 | 1 = 0;
+  constructor(op: "OR" | "AND", ...sources: TriggerReadablePort[]) {
+    if (sources.length === 0) {
+      this.reduce = () => false;
+      this._dependencies = [];
+      this._snapshot = 0;
+      return;
+    }
+    if (op === "OR") {
+      this.reduce = () => sources.some((s) => s.trigger === 1);
+    } else {
+      this.reduce = () => sources.every((s) => s.trigger === 1);
+    }
+    this._dependencies = sources;
+    this.snapshot();
+  }
+  public snapshot(): void {
+    this._snapshot = this.reduce() ? 1 : 0;
+  }
+  public get trigger(): Readonly<0 | 1> {
+    return this._snapshot;
+  }
+  public dependencies(): SnapshotPort[] {
+    return this._dependencies;
+  }
+}
+
 type TriggerToggleReducerOptions = {
   initGate?: 0 | 1;
 };
