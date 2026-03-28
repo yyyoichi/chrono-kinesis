@@ -61,7 +61,7 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
 
     const distance = Math.sqrt(distanceSquared);
     const velocity = Math.hypot(...this._state.velocity);
-    this.state.activityLevel = distance + velocity;
+    this._state.activityLevel = distance + velocity;
   }
 
   public vector(): Readonly<number[]> {
@@ -79,6 +79,9 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
   public get state() {
     return this._state;
   }
+  /**
+   * @deprecated Use state.activityLevel instead.
+   */
   public get activityScore() {
     return this._state.activityLevel;
   }
