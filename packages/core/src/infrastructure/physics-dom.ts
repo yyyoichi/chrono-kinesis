@@ -3,13 +3,13 @@ import type { PhysicsPort } from "../domain/ports";
 import type { DomPhysicsSource } from "./contracts/dom-physics-source";
 
 type StyleRecipe = {
-  transform?: CSSStyleDeclaration["transform"][];
-  filter?: CSSStyleDeclaration["filter"][];
-  backdropFilter?: CSSStyleDeclaration["backdropFilter"][];
-  styles?: Partial<CSSStyleDeclaration>;
+  transform: string[];
+  filter: string[];
+  backdropFilter: string[];
+  styles: Partial<CSSStyleDeclaration>;
 };
 
-type StyleRecipeMapper = (st: SimulationState) => StyleRecipe;
+type StyleRecipeMapper = (st: SimulationState, recipe: StyleRecipe) => void;
 
 export class DomVisualizer {
   constructor(
@@ -25,77 +25,82 @@ export class DomVisualizer {
     return new DomVisualizer([...this.mappers], false);
   }
 
-  public opaticy(mapper: (state: SimulationState) => string | number) {
-    return this.add((state) => ({
-      styles: {
-        opacity: mapper(state).toString(),
-      },
-    }));
+  public opacity(mapper: (state: SimulationState) => string | number) {
+    return this.add((state, recipe) => {
+      recipe.styles.opacity = mapper(state).toString();
+    });
   }
 
   public zIndex(mapper: (state: SimulationState) => string | number) {
-    return this.add((state) => ({
-      styles: {
-        zIndex: mapper(state).toString(),
-      },
-    }));
+    return this.add((state, recipe) => {
+      recipe.styles.zIndex = mapper(state).toString();
+    });
   }
 
   public blur(mapper: (state: SimulationState) => string | number) {
-    return this.add((state) => {
+    return this.add((state, recipe) => {
       const v = mapper(state);
-      return {
-        filter: [typeof v === "number" ? `blur(${v}px)` : `blur(${v})`],
-      };
+      recipe.filter.push(typeof v === "number" ? `blur(${v}px)` : `blur(${v})`);
     });
   }
 
   public scale(mapper: (state: SimulationState) => string | number) {
-    return this.add((state) => ({ transform: [`scale(${mapper(state)})`] }));
+    return this.add((state, recipe) => {
+      recipe.transform.push(`scale(${mapper(state)})`);
+    });
   }
 
   public calculate(state: SimulationState) {
-    const transforms: string[] = [];
-    const filters: string[] = [];
-    const backdropFilters: string[] = [];
-    const styles: Partial<CSSStyleDeclaration> = {};
+    const recipe: StyleRecipe = {
+      transform: [],
+      filter: [],
+      backdropFilter: [],
+      styles: {},
+    };
 
     if (this.useDefaultTranslate && state.relative.length >= 2) {
       const x = Math.round(state.relative[0] * 10) / 10;
       const y = Math.round(state.relative[1] * 10) / 10;
-      transforms.push(`translate3d(${x}px, ${y}px, 0)`);
+      recipe.transform.push(`translate3d(${x}px, ${y}px, 0)`);
     }
 
     for (const mapper of this.mappers) {
-      const r = mapper(state);
-      if (r.transform) {
-        transforms.push(...r.transform);
-      }
-      if (r.filter) {
-        filters.push(...r.filter);
-      }
-      if (r.backdropFilter) {
-        backdropFilters.push(...r.backdropFilter);
-      }
-      if (r.styles) {
-        Object.assign(styles, r.styles);
-      }
+      mapper(state, recipe);
     }
 
-    if (!styles.transform && transforms.length) {
-      styles.transform = transforms.join(" ");
+    const result = recipe.styles;
+
+    if (!result.transform && recipe.transform.length) {
+      result.transform = recipe.transform.join(" ");
     }
-    if (!styles.filter && filters.length) {
-      styles.filter = filters.join(" ");
+    if (!result.filter && recipe.filter.length) {
+      result.filter = recipe.filter.join(" ");
     }
-    if (!styles.backdropFilter && backdropFilters.length) {
-      styles.backdropFilter = backdropFilters.join(" ");
+    if (!result.backdropFilter && recipe.backdropFilter.length) {
+      result.backdropFilter = recipe.backdropFilter.join(" ");
     }
 
-    return styles;
+    return result;
   }
 }
 
+export class ElementPhysics implements PhysicsPort {
+  constructor(
+    private readonly element: HTMLElement,
+    private readonly visualizer = new DomVisualizer(),
+  ) {}
+  public apply(state: SimulationState) {
+    const style = this.visualizer.calculate(state);
+    for (const [key, val] of Object.entries(style)) {
+      // biome-ignore lint/suspicious/noExplicitAny: CSSStyleDeclarationの型定義が厳しすぎるため、anyでキャストして代入する
+      (this.element.style as any)[key] = val ?? "";
+    }
+  }
+}
+
+/**
+ * @deprecated 依存関係複雑のため。DomSourceの非推奨のため。
+ */
 export class DomPhysics implements PhysicsPort {
   constructor(
     private readonly source: DomPhysicsSource,
