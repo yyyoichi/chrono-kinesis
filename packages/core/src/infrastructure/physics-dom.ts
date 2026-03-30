@@ -25,7 +25,7 @@ export class DomVisualizer {
     return new DomVisualizer([...this.mappers], false);
   }
 
-  public opaticy(mapper: (state: SimulationState) => string | number) {
+  public opacity(mapper: (state: SimulationState) => string | number) {
     return this.add((state, recipe) => {
       recipe.styles.opacity = mapper(state).toString();
     });
