@@ -1,6 +1,5 @@
 import type {
   GateReadablePort,
-  PhysicsPort,
   PositionReadablePort,
   SizeReadablePort,
   SnapshotPort,
@@ -75,7 +74,7 @@ export class ElementRect implements VectorReadablePort, PositionReadablePort, Si
   }
 }
 
-type ParentSwitchedPhysicsOption = {
+type ParentSwitchTriggerOption = {
   // gate=1のときにのみ座標を更新するオプション。これを有効にすると、gateが0のときは要素は切り替えられません。
   switchGate?: GateReadablePort;
 };
@@ -90,10 +89,10 @@ type ParentSwitchedPhysicsOption = {
  * @example
  * // 切替対象となる node を ElementRect に利用する場合、オプションに trigger として渡すことで移動後の座標をElementRect内で更新することが出来ます。
  * const trigger = new ParentSwitchTrigger(node, gate, trueParent, falseParent);
- * const rect = new ElementRect(node {trigger});
+ * const rect = new ElementRect(node, { trigger });
  * simulation.add({
  *   clock: someClock,
- *   target: somTarget,
+ *   target: someTarget,
  *   // TeleportKineticsを用いて座標切替をKineticsに通知して初期化座標を修正することを検討してください。
  *   kinetics: new TeleportKinetics(rect),
  *   physics: somePhysics,
@@ -103,7 +102,7 @@ export class ParentSwitchTrigger implements TriggerReadablePort {
   private _snapshot: 0 | 1 = 0; // 1のときに切り替えが発生することを表すフラグ
   private state: {
     currentParent: 0 | 1; // 0: falseParentの子, 1: trueParentの子
-    trigger: boolean; // 切替が発生するか。1のときapply時に切替が実行されます。
+    trigger: boolean; // 切替が発生したか。
   } = {
     currentParent: 0,
     trigger: false,
@@ -115,7 +114,7 @@ export class ParentSwitchTrigger implements TriggerReadablePort {
     private readonly gate: GateReadablePort,
     private readonly trueParent: Node,
     private readonly falseParent: Node,
-    options: ParentSwitchedPhysicsOption = {},
+    options: ParentSwitchTriggerOption = {},
   ) {
     const currentParent = node.parentNode;
     if (currentParent === trueParent) {
