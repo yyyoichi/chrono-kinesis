@@ -3,9 +3,9 @@ export const title = "アニメーションDOM追従";
 type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 ---
 
-<div id="mouse-snake-box" {...Astro.props}>
+<div id="mouse-snake-container" {...Astro.props}>
   <div
-    id="mouse-snake-pointer"
+    id="mouse-snake-box"
     style="width: 1rem; height: 1rem; background-color: cadetblue; margin-top: 0;"
   >
   </div>
@@ -14,49 +14,54 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 <script>
   import {
     DefaultSimulatorService,
-    DomPhysics,
-    DomSource,
-    DomVisualizer,
+    ElementPhysics,
+    ElementRect,
     Kinetics,
     MousePositionClock,
     SpringEngine,
+    WindowResizeTriggerClock,
     type VectorReadablePort,
   } from "@yyyoichi/chrono-kinesis";
   const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
 
-  const box = document.getElementById("mouse-snake-box")!;
-  const mouse = new MousePositionClock(box);
-  const pointer = new DomSource(
-    document.getElementById("mouse-snake-pointer")!,
-  );
+  const containerEl = document.getElementById("mouse-snake-container")!;
+  const boxEl = document.getElementById("mouse-snake-box")!;
 
-  const vis = new DomVisualizer();
+  const windowResizeTrigger = new WindowResizeTriggerClock();
+  const mousePositionClock = new MousePositionClock(containerEl);
+  const pointer = new ElementRect(boxEl, {
+    trigger: windowResizeTrigger,
+  });
   const engine = new SpringEngine({ settleMs: 400, zeta: 0.7 });
+  const kinetics = new Kinetics(pointer.position(), { engine: engine });
+
   simulation.add({
-    clock: mouse,
-    target: mouse,
-    kinetics: new Kinetics(pointer.position(), { engine: engine }),
-    physics: new DomPhysics(pointer, vis),
+    clock: mousePositionClock,
+    target: mousePositionClock,
+    kinetics: kinetics,
+    physics: new ElementPhysics(boxEl),
   });
 
-  let target: VectorReadablePort = pointer;
+  let target: VectorReadablePort = kinetics;
   for (let i = 1; i <= 5; i++) {
-    const clone = pointer.clone(
-      {
-        opacity: `${1 - 0.1 * i}`,
-      },
-      box,
-    );
-    const node = new Kinetics(clone.position(), {
+    const cloneEl = boxEl.cloneNode(true) as HTMLElement;
+    cloneEl.removeAttribute("id");
+    cloneEl.style.opacity = `${1 - 0.1 * i}`;
+    containerEl.appendChild(cloneEl);
+
+    const cloneRect = new ElementRect(cloneEl, {
+      trigger: windowResizeTrigger,
+    });
+    const cloneKinetics = new Kinetics(cloneRect.position(), {
       engine: engine.clone({ settleMs: 400 - i * 10 }),
     });
     simulation.add({
-      clock: mouse,
+      clock: mousePositionClock,
       target: target,
-      kinetics: node,
-      physics: new DomPhysics(clone, vis),
+      kinetics: cloneKinetics,
+      physics: new ElementPhysics(cloneEl),
     });
-    target = node;
+    target = cloneKinetics;
   }
   simulation.run();
 </script>
