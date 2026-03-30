@@ -33,9 +33,6 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     CenterAlignedPosition,
     ClockComposer,
     DefaultSimulatorService,
-    DomPhysics,
-    DomSource,
-    DomVisualizer,
     GateConditionalVector,
     PositionInRegionGate,
     PrimaryPointerDownGateClock,
@@ -46,6 +43,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     WindowResizeTriggerClock,
     ParentSwitchTrigger,
     TriggerReducer,
+    ElementPhysics,
   } from "@yyyoichi/chrono-kinesis";
 
   // 1. ドラッグ開始
@@ -113,7 +111,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     kinetics: new TeleportKinetics(boxRect, {
       engine: new SpringEngine({ settleMs: 800, zeta: 0.7 }),
     }),
-    physics: new DomPhysics(new DomSource(boxEl), new DomVisualizer()),
+    physics: new ElementPhysics(boxEl),
   });
   simulation.run();
 
