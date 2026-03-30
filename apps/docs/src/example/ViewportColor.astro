@@ -63,7 +63,7 @@ const { style, ...props } = Astro.props;
   );
   const vis = new DomVisualizer()
     .noTranslate()
-    .opaticy((st) => `${Math.round(st.absolute[0]) / 1000}`);
+    .opacity((st) => `${Math.round(st.absolute[0]) / 1000}`);
   simulation.add({
     clock: new ClockComposer(onClock, offClock),
     target: opacity,
