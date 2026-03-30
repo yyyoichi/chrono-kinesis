@@ -34,10 +34,8 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     DefaultSimulatorService,
     DialogGateClock,
     DialogSilentClosePhysics,
-    DomPhysics,
-    DomSource,
-    DomVisualizer,
-    FixedPosition,
+    ElementPhysics,
+    ElementRect,
     GateConditionalVector,
     Kinetics,
     OffsetPosition,
@@ -52,23 +50,20 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     type: "modal",
     closedby: "any",
   });
-  const dialogSrc = new DomSource(dialogEl);
-
-  // 初期値は画面外。Open(gate=1)で、画面内に移動。
-  const closedPosition = new FixedPosition(dialogSrc.position());
+  const dialogRect = new ElementRect(dialogEl);
 
   simulation.add({
     clock: dialogGateClock,
     target: new GateConditionalVector(
       dialogGateClock,
-      new OffsetPosition(closedPosition, -300),
-      closedPosition,
+      new OffsetPosition(dialogRect, -300),
+      dialogRect,
     ),
-    kinetics: new Kinetics(dialogSrc.position(), {
+    kinetics: new Kinetics(dialogRect.position(), {
       engine: new SpringEngine({ settleMs: 400, zeta: 0.7 }),
     }),
     physics: [
-      new DomPhysics(dialogSrc, new DomVisualizer()),
+      new ElementPhysics(dialogEl),
       new DialogSilentClosePhysics(dialogGateClock, {
         stopThreshold: 80,
       }),
