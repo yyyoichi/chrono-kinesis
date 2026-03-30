@@ -135,15 +135,16 @@ export class ParentSwitchTrigger implements TriggerReadablePort {
     this.state.trigger = false;
 
     const prev = this.state.currentParent;
-    this.state.currentParent = this.gate.gate;
-    const requiredSwitch = prev !== this.state.currentParent;
+    const current = this.gate.gate;
+    const requiredSwitch = prev !== current;
     // Switchを許可するかどうか。switchGateが未指定の場合は常に許可します。
     const enabledSwitch = this.switchGate === null || this.switchGate.gate === 1;
     // Switchが必要で、かつ許可されている場合は切替を予約します。
     if (requiredSwitch && enabledSwitch) {
       // snapshotでの副作用ではなく座標更新と解釈します。
       // 同一snapshotでtriggerによるElementRectの更新、Kineticsのteleportまで期待します。
-      this._switch();
+      this._switch(current);
+      this.state.currentParent = current;
       this.state.trigger = true;
     }
 
@@ -155,9 +156,9 @@ export class ParentSwitchTrigger implements TriggerReadablePort {
   public dependencies(): SnapshotPort[] {
     return this._dependencies;
   }
-  // stateに従って親要素を切り替えます。
-  private _switch() {
-    if (this.state.currentParent === 1) {
+  // parentに従っての親要素を切り替えます。
+  private _switch(parent: 0 | 1) {
+    if (parent === 1) {
       this.trueParent.appendChild(this.node);
     } else {
       this.falseParent.appendChild(this.node);
