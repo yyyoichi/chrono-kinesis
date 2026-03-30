@@ -87,7 +87,7 @@ export class DomVisualizer {
 export class ElementPhysics implements PhysicsPort {
   constructor(
     private readonly element: HTMLElement,
-    private readonly visualizer: DomVisualizer,
+    private readonly visualizer = new DomVisualizer(),
   ) {}
   public apply(state: SimulationState) {
     const style = this.visualizer.calculate(state);
