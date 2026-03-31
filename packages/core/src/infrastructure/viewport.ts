@@ -24,8 +24,10 @@ type ViewportThresholdOptions = {
   // viewportとしてwindow以外を利用する場合、resizeTriggerも同じViewportのリサイズClockを指定する必要があります。
   resizeTrigger: ResizeTriggerPort;
 };
-
-// DomがViewportの特定の位置を超えたら1tickだけtrigger=1を出すClock
+/**
+ * @deprecated IntersectionTriggerClockと置き換えのため。
+ * DomがViewportの特定の位置を超えたら1tickだけtrigger=1を出すClock
+ */
 export class ViewportTriggerClock extends BaseClock implements ClockPort, TriggerReadablePort {
   private static readonly SENTINEL_HOST_CLASS = "ck-viewport-trigger-host";
   // 監視対象のトリガー位置設定
@@ -159,6 +161,9 @@ export class ViewportTriggerClock extends BaseClock implements ClockPort, Trigge
 }
 
 let viewportSignal: ViewportSignal | null = null;
+/**
+ * @deprecated IntersectionTriggerClockと置き換えのため。
+ */
 export function getDefaultViewportSignal() {
   if (!viewportSignal) {
     viewportSignal = new ViewportSignal();
@@ -166,6 +171,9 @@ export function getDefaultViewportSignal() {
   return viewportSignal;
 }
 
+/**
+ * @deprecated IntersectionTriggerClockと置き換えのため。
+ */
 export function subscribeDefaultViewport(...arg: Parameters<ViewportSignal["subscribe"]>) {
   getDefaultViewportSignal().subscribe(...arg);
 }
@@ -173,6 +181,9 @@ export function subscribeDefaultViewport(...arg: Parameters<ViewportSignal["subs
 type ViewportCrossDirection = "forward" | "backward";
 type ViewportCrossCallback = (direction: ViewportCrossDirection) => void;
 
+/**
+ * @deprecated IntersectionTriggerClockと置き換えのため。
+ */
 export class ViewportSignal {
   private observer: IntersectionObserver | null = null;
   private handlers = new Map<Element, ViewportCrossCallback>();
