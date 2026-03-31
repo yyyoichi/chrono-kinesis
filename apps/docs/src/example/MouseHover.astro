@@ -30,15 +30,15 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     trigger: windowResizeTriggerClock,
   });
   // container内のpointermoveを監視します。
-  const pointerPotisionClock = new PrimaryPointerPositionClock(
+  const pointerPositionClock = new PrimaryPointerPositionClock(
     document.getElementById("mouse-hover-container")!,
     {
       initPosition: boxRect,
     },
   );
   simulation.add({
-    clock: new ClockComposer(pointerPotisionClock, windowResizeTriggerClock),
-    target: pointerPotisionClock,
+    clock: new ClockComposer(pointerPositionClock, windowResizeTriggerClock),
+    target: pointerPositionClock,
     // 初期座標はboxRectです。（初期座標の変更があれば位置を修正します）
     kinetics: new TeleportKinetics(boxRect),
     physics: new ElementPhysics(boxEl),
