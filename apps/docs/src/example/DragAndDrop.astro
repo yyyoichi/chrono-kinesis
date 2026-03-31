@@ -3,9 +3,9 @@ export const title = "ドラッグ";
 type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 ---
 
-<div id="drag-pointer-box" {...Astro.props}>
+<div id="drag-pointer-container" {...Astro.props}>
   <div
-    id="drag-pointer"
+    id="drag-box"
     style="touch-action: none; width: 4rem; height: 4rem; background-color: cadetblue"
   >
   </div>
@@ -16,49 +16,51 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     CenterAlignedPosition,
     ClockComposer,
     DefaultSimulatorService,
-    DomPhysics,
-    DomSource,
-    DomVisualizer,
-    FixedPosition,
+    ElementPhysics,
+    ElementRect,
     GateConditionalVector,
     Kinetics,
     PrimaryPointerDownGateClock,
     PrimaryPointerPositionClock,
     SpringEngine,
+    WindowResizeTriggerClock,
   } from "@yyyoichi/chrono-kinesis";
+
   const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
 
-  const pointerDom = document.getElementById("drag-pointer")!;
-  const pointerSource = new DomSource(pointerDom);
+  const boxEl = document.getElementById("drag-box")!;
 
-  // pointerDomをドラッグ時に起動します。
-  const downGateClock = new PrimaryPointerDownGateClock(pointerDom);
-  // gateが1にときのみpointerの位置を追跡します。
+  // pointerElに対するpointerdownを監視します。
+  const pointerDownGateClock = new PrimaryPointerDownGateClock(boxEl);
+  // gate=1のときのみpointerの位置を追跡します。
   const pointerPositionClock = new PrimaryPointerPositionClock(
-    document.getElementById("drag-pointer-box")!,
+    document.getElementById("drag-pointer-container")!,
     {
-      gate: downGateClock,
-      initPosition: downGateClock,
+      gate: pointerDownGateClock,
+      initPosition: pointerDownGateClock,
     },
   );
 
+  const boxRect = new ElementRect(boxEl, {
+    trigger: new WindowResizeTriggerClock(),
+  });
   // ドラッグ中はpointer位置をターゲットとして、ドラッグしていないときは初期位置をターゲットとするベクトルです。
   const target = new GateConditionalVector(
-    downGateClock,
+    pointerDownGateClock,
     // ドラッグが開始されればPointerの位置をターゲットとします。
     // pointerPositionClockの位置をpointerDomの中心にオフセットするために使用します。
-    new CenterAlignedPosition(pointerPositionClock, pointerSource),
+    new CenterAlignedPosition(pointerPositionClock, boxRect),
     // ドラッグが開始されていなければ初期位置をターゲットとします。
-    new FixedPosition(pointerSource.position()),
+    boxRect,
   );
   simulation.add({
     // いずれかがトリガーしている間はアクティブです。
-    clock: new ClockComposer(downGateClock, pointerPositionClock),
+    clock: new ClockComposer(pointerDownGateClock, pointerPositionClock),
     target: target,
     kinetics: new Kinetics(target.vector(), {
       engine: new SpringEngine({ settleMs: 800, zeta: 0.7 }),
     }),
-    physics: new DomPhysics(pointerSource, new DomVisualizer()),
+    physics: new ElementPhysics(boxEl),
   });
   simulation.run();
 </script>
