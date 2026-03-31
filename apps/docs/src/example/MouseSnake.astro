@@ -13,12 +13,15 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 
 <script>
   import {
+    ClockComposer,
     DefaultSimulatorService,
     ElementPhysics,
     ElementRect,
     Kinetics,
-    MousePositionClock,
+    PrimaryPointerPositionClock,
     SpringEngine,
+    TeleportKinetics,
+    VectorComposer,
     WindowResizeTriggerClock,
     type VectorReadablePort,
   } from "@yyyoichi/chrono-kinesis";
@@ -28,16 +31,19 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   const boxEl = document.getElementById("mouse-snake-box")!;
 
   const windowResizeTrigger = new WindowResizeTriggerClock();
-  const mousePositionClock = new MousePositionClock(containerEl);
-  const pointer = new ElementRect(boxEl, {
+  const boxRect = new ElementRect(boxEl, {
     trigger: windowResizeTrigger,
   });
+  const pointerPositionClock = new PrimaryPointerPositionClock(containerEl, {
+    initPosition: boxRect,
+  });
   const engine = new SpringEngine({ settleMs: 400, zeta: 0.7 });
-  const kinetics = new Kinetics(pointer.position(), { engine: engine });
+  const kinetics = new TeleportKinetics(boxRect, { engine: engine });
+  const clock = new ClockComposer(pointerPositionClock, windowResizeTrigger);
 
   simulation.add({
-    clock: mousePositionClock,
-    target: mousePositionClock,
+    clock: clock,
+    target: new VectorComposer(pointerPositionClock, boxRect),
     kinetics: kinetics,
     physics: new ElementPhysics(boxEl),
   });
@@ -52,12 +58,12 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     const cloneRect = new ElementRect(cloneEl, {
       trigger: windowResizeTrigger,
     });
-    const cloneKinetics = new Kinetics(cloneRect.position(), {
+    const cloneKinetics = new TeleportKinetics(cloneRect, {
       engine: engine.clone({ settleMs: 400 - i * 10 }),
     });
     simulation.add({
-      clock: mousePositionClock,
-      target: target,
+      clock: clock,
+      target: new VectorComposer(target, cloneRect),
       kinetics: cloneKinetics,
       physics: new ElementPhysics(cloneEl),
     });
