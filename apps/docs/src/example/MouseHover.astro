@@ -3,9 +3,9 @@ export const title = "マウス追従";
 type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 ---
 
-<div id="mouse-hover-box" {...Astro.props}>
+<div id="mouse-hover-container" {...Astro.props}>
   <div
-    id="mouse-hover-pointer"
+    id="mouse-hover-box"
     style="width: 1rem; height: 1rem; background-color: cadetblue"
   >
   </div>
@@ -13,25 +13,35 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 
 <script>
   import {
+    ClockComposer,
     DefaultSimulatorService,
-    DomPhysics,
-    DomSource,
-    DomVisualizer,
-    Kinetics,
-    MousePositionClock,
+    ElementPhysics,
+    ElementRect,
+    PrimaryPointerPositionClock,
+    TeleportKinetics,
+    WindowResizeTriggerClock,
   } from "@yyyoichi/chrono-kinesis";
   const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
-  const mouse = new MousePositionClock(
-    document.getElementById("mouse-hover-box")!,
-  );
-  const pointer = new DomSource(
-    document.getElementById("mouse-hover-pointer")!,
+
+  const windowResizeTriggerClock = new WindowResizeTriggerClock();
+  const boxEl = document.getElementById("mouse-hover-box")!;
+  const boxRect = new ElementRect(boxEl, {
+    // windowリサイズ時に位置を再度取得します。
+    trigger: windowResizeTriggerClock,
+  });
+  // container内のpointermoveを監視します。
+  const pointerPositionClock = new PrimaryPointerPositionClock(
+    document.getElementById("mouse-hover-container")!,
+    {
+      initPosition: boxRect,
+    },
   );
   simulation.add({
-    clock: mouse,
-    target: mouse,
-    kinetics: new Kinetics(pointer.position()),
-    physics: new DomPhysics(pointer, new DomVisualizer()),
+    clock: new ClockComposer(pointerPositionClock, windowResizeTriggerClock),
+    target: pointerPositionClock,
+    // 初期座標はboxRectです。（初期座標の変更があれば位置を修正します）
+    kinetics: new TeleportKinetics(boxRect),
+    physics: new ElementPhysics(boxEl),
   });
   simulation.run();
 </script>

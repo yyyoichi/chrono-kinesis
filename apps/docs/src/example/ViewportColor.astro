@@ -25,29 +25,28 @@ const { style, ...props } = Astro.props;
 <script>
   import {
     DefaultSimulatorService,
-    DomPhysics,
     DomVisualizer,
     ElementResizeTriggerClock,
     LinearScaledVector,
     Kinetics,
     ViewportSignal,
     ViewportTriggerClock,
-    DomSource,
     TriggerGateReducer,
     ClockComposer,
+    ElementPhysics,
   } from "@yyyoichi/chrono-kinesis";
   const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
   // 要素が順スクロールで50%に達したらOpacityを1にして、逆スクロールで10%に達したら0にする例です。
 
-  const root = document.getElementById("viewport-root")!;
-  const box = document.getElementById("viewport-target-box")!;
+  const rootEl = document.getElementById("viewport-root")!;
+  const boxEl = document.getElementById("viewport-target-box")!;
 
   // 順スクロールで50%に到達したらトリガーします。
-  const onClock = new ViewportTriggerClock(box, {
+  const onClock = new ViewportTriggerClock(boxEl, {
     threshold: 0.5,
     triggerDirection: "forward",
-    viewportSignal: new ViewportSignal({ root }),
-    resizeTrigger: new ElementResizeTriggerClock(root),
+    viewportSignal: new ViewportSignal({ root: rootEl }),
+    resizeTrigger: new ElementResizeTriggerClock(rootEl),
   });
   // 逆スクロールで10%に到達したらトリガーします。
   const offClock = onClock.newClock({
@@ -68,7 +67,7 @@ const { style, ...props } = Astro.props;
     clock: new ClockComposer(onClock, offClock),
     target: opacity,
     kinetics: new Kinetics([0]),
-    physics: new DomPhysics(new DomSource(box), vis),
+    physics: new ElementPhysics(boxEl, vis),
   });
   simulation.run();
 </script>
