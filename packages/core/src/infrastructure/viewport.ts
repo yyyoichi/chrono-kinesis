@@ -13,13 +13,15 @@ interface ResizeTriggerPort
     SizeReadablePort,
     DisposablePort {}
 
+type ViewportOrientation = "vertical" | "horizontal";
+
 type ViewportThresholdOptions = {
   threshold: number;
   triggerDirection?: "forward" | "backward" | "both";
   // デフォルトでwindowのviewportを利用します。
   viewportSignal: ViewportSignal;
   // windowのリサイズを監視するためのsignal。デフォルトでwindowResizeSignalを利用します。
-  // viewportとしてwindow以外を利用する場合、resizeSignalも同じViewportのリサイズClockを指定する必要があります。
+  // viewportとしてwindow以外を利用する場合、resizeTriggerも同じViewportのリサイズClockを指定する必要があります。
   resizeTrigger: ResizeTriggerPort;
 };
 
@@ -174,17 +176,25 @@ type ViewportCrossCallback = (direction: ViewportCrossDirection) => void;
 export class ViewportSignal {
   private observer: IntersectionObserver | null = null;
   private handlers = new Map<Element, ViewportCrossCallback>();
+  private orientations = new Map<Element, ViewportOrientation>();
   private initializedTargets = new Set<Element>();
-  private previousTopByTarget = new Map<Element, number>();
+  private previousPosByTarget = new Map<Element, number>();
+
   constructor(private options: IntersectionObserverInit = {}) {}
-  public subscribe(target: Element, callback: ViewportCrossCallback) {
+  public subscribe(
+    target: Element,
+    callback: ViewportCrossCallback,
+    orientation: ViewportOrientation = "vertical",
+  ) {
     this.handlers.set(target, callback);
+    this.orientations.set(target, orientation);
     this.ensureObserver().observe(target);
   }
   public unsubscribe(target: Element) {
     this.handlers.delete(target);
+    this.orientations.delete(target);
     this.initializedTargets.delete(target);
-    this.previousTopByTarget.delete(target);
+    this.previousPosByTarget.delete(target);
     if (this.observer) {
       this.observer.unobserve(target);
     }
@@ -197,40 +207,46 @@ export class ViewportSignal {
     if (this.observer) {
       return this.observer;
     }
+
     this.observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           const target = entry.target;
-          const currentTop = entry.boundingClientRect.top;
-          const rootBottom = entry.rootBounds?.bottom ?? window.innerHeight;
+          const orientation = this.orientations.get(target) ?? "vertical";
+          const isVertical = orientation === "vertical";
+          const currentPos = isVertical
+            ? entry.boundingClientRect.top
+            : entry.boundingClientRect.left;
+          const rootEnd = isVertical
+            ? (entry.rootBounds?.bottom ?? window.innerHeight)
+            : (entry.rootBounds?.right ?? window.innerWidth);
 
           if (!this.initializedTargets.has(target)) {
             this.initializedTargets.add(target);
-            this.previousTopByTarget.set(target, currentTop);
+            this.previousPosByTarget.set(target, currentPos);
             // 初期位置がすでにしきい値を超えていた場合はforwardを発火する。
-            // ブラウザバックなどでスクロール位置が復元された場合を想定。
-            if (currentTop <= rootBottom) {
+            if (currentPos <= rootEnd) {
               this.handlers.get(target)?.("forward");
             }
             continue;
           }
 
-          const previousTop = this.previousTopByTarget.get(target) ?? currentTop;
-          this.previousTopByTarget.set(target, currentTop);
+          const previousPos = this.previousPosByTarget.get(target) ?? currentPos;
+          this.previousPosByTarget.set(target, currentPos);
 
           const direction: ViewportCrossDirection =
-            currentTop < previousTop ? "forward" : "backward";
+            currentPos < previousPos ? "forward" : "backward";
 
-          const crossedBottomLine =
-            (previousTop > rootBottom && currentTop <= rootBottom) || // 画面下部を上から下に交差で発火
-            (previousTop <= rootBottom && currentTop > rootBottom); // 画面下部を下から上に交差で発火
-          if (!crossedBottomLine) {
+          const crossedLine =
+            (previousPos > rootEnd && currentPos <= rootEnd) || // 境界を外から内に交差
+            (previousPos <= rootEnd && currentPos > rootEnd); // 境界を内から外に交差
+          if (!crossedLine) {
             continue;
           }
           this.handlers.get(target)?.(direction);
         }
       },
-      // 画面下部と交差で発火
+      // 画面端と交差で発火
       {
         root: null,
         rootMargin: "0px",
