@@ -4,3 +4,4 @@ export * from "./dialog-dom";
 export * from "./physics-dom";
 export * from "./rect-dom";
 export * from "./source-dom";
+export * from "./viewport";
