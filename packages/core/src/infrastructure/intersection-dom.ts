@@ -144,7 +144,7 @@ const signalByRoot = new WeakMap<Element | Document, IntersectionSignal>();
 function getSignal(root: Element | Document = document) {
   let signal = signalByRoot.get(root);
   if (!signal) {
-    signal = new IntersectionSignal();
+    signal = new IntersectionSignal({ root: root });
     signalByRoot.set(root, signal);
   }
   return signal;
