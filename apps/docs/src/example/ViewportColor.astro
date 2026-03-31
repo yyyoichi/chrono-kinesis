@@ -4,60 +4,74 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 const { style, ...props } = Astro.props;
 ---
 
-<div id="viewport-root" {...props} style={style + "overflow: auto;"}>
-  <div style="height: 500px; width:100%">
-    <span
-      style="position: sticky; top: 0; background-color: var(--sl-color-bg); color: var(--sl-color-text); padding: 0.5rem; font-weight: bold;"
-    >
-      Scroll ME!
-    </span>
-    <div style="margin-top: 130px; display: block; text-align: center;">
-      画面の下部50%にボックスが入ると表示されます。
-    </div>
+<div
+  id="viewport-root"
+  {...props}
+  style={style + "overflow: auto; container-type: size;"}
+>
+  <div style="height: 300px; width:100%">
     <div
       id="viewport-target-box"
-      style="opacity: 0.1; height: 200px; width:50%; margin: 0 auto; background-color: cadetblue;"
+      style="position: relative; opacity: 0.1; height: 200px; width:50%; margin: 190px auto; background-color: cadetblue;"
     >
+      <div id="viewport-target-on-trigger"></div>
+      <div id="viewport-target-off-trigger"></div>
     </div>
   </div>
 </div>
+<style>
+  /* 画面サイズ（viewpor-root）の相対サイズ分だけ、viewport-target-boxから離れた位置に配置します。 */
+  #viewport-target-on-trigger {
+    width: 1px;
+    height: 1px;
+    position: absolute;
+    top: 50cqh;
+    margin: 0;
+  }
+  #viewport-target-off-trigger {
+    width: 1px;
+    height: 1px;
+    position: absolute;
+    top: 10cqh;
+    margin: 0;
+  }
+</style>
 
 <script>
   import {
     DefaultSimulatorService,
     DomVisualizer,
-    ElementResizeTriggerClock,
     LinearScaledVector,
     Kinetics,
-    ViewportSignal,
-    ViewportTriggerClock,
     TriggerGateReducer,
     ClockComposer,
     ElementPhysics,
+    IntersectionTriggerClock,
   } from "@yyyoichi/chrono-kinesis";
   const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
-  // 要素が順スクロールで50%に達したらOpacityを1にして、逆スクロールで10%に達したら0にする例です。
+
+  // 要素が順スクロールでrootの50%に達したらOpacityを1にして、
+  // 逆スクロールで10%に達したら0にする例です。
 
   const rootEl = document.getElementById("viewport-root")!;
   const boxEl = document.getElementById("viewport-target-box")!;
+  const onTriggerEl = document.getElementById("viewport-target-on-trigger")!;
+  const offTriggerEl = document.getElementById("viewport-target-off-trigger")!;
 
   // 順スクロールで50%に到達したらトリガーします。
-  const onClock = new ViewportTriggerClock(boxEl, {
-    threshold: 0.5,
-    triggerDirection: "forward",
-    viewportSignal: new ViewportSignal({ root: rootEl }),
-    resizeTrigger: new ElementResizeTriggerClock(rootEl),
+  const onClock = new IntersectionTriggerClock(onTriggerEl, {
+    direction: "forward",
+    root: rootEl,
   });
   // 逆スクロールで10%に到達したらトリガーします。
-  const offClock = onClock.newClock({
-    threshold: 0.1,
-    triggerDirection: "backward",
+  const offClock = new IntersectionTriggerClock(offTriggerEl, {
+    direction: "backward",
+    root: rootEl,
   });
 
   const opacity = new LinearScaledVector(
     // onClockがトリガーされたら1、offClockがトリガーされたら0にします
     new TriggerGateReducer(onClock, offClock),
-    // 値を100-1000の範囲にスケーリングします
     { min: 100, max: 1000 },
   );
   const vis = new DomVisualizer()
