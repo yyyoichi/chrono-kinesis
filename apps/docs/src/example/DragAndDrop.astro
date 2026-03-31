@@ -32,7 +32,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 
   // pointerElをpointerdownを監視します。
   const pointerDownGateClock = new PrimaryPointerDownGateClock(boxEl);
-  // gateが1にときのみpointerの位置を追跡します。
+  // gate=1のときのみpointerの位置を追跡します。
   const pointerPositionClock = new PrimaryPointerPositionClock(
     document.getElementById("drag-pointer-container")!,
     {
