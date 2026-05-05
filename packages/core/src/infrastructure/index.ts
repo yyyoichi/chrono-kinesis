@@ -3,6 +3,7 @@ export * from "./clock-dom";
 export * from "./dialog-dom";
 export * from "./intersection-dom";
 export * from "./physics-dom";
+export * from "./pointer-dom";
 export * from "./rect-dom";
 export * from "./source-dom";
 export * from "./viewport";
