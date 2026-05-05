@@ -8,7 +8,7 @@ import type {
   SnapshotPort,
   TriggerReadablePort,
   VectorReadablePort,
-} from "./ports";
+} from "../ports";
 
 export class VectorComposer implements VectorReadablePort {
   private _snapshot: number[] = [];

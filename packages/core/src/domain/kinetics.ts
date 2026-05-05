@@ -1,11 +1,11 @@
-import type { SimulationState } from "./models/simulation-state";
 import type {
   EnginePort,
   KineticsPort,
   PositionReadablePort,
   SnapshotPort,
   VectorReadablePort,
-} from "./ports";
+} from "../ports";
+import type { SimulationState } from "./models/simulation-state";
 
 type EngineResult = {
   position: number;

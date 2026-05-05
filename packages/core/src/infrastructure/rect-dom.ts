@@ -5,7 +5,7 @@ import type {
   SnapshotPort,
   TriggerReadablePort,
   VectorReadablePort,
-} from "../domain";
+} from "../ports";
 import { type ElementRectSpace, getPositionReader, readElementSize } from "./contracts/dom-space";
 
 type ElementRectOption = {

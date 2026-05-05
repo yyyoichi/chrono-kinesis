@@ -1,10 +1,5 @@
-import {
-  BaseClock,
-  type ClockPort,
-  type DisposablePort,
-  type SizeReadablePort,
-  type TriggerReadablePort,
-} from "../domain";
+import { BaseClock } from "../domain";
+import type { ClockPort, DisposablePort, SizeReadablePort, TriggerReadablePort } from "../ports";
 import { type ElementRectSpace, readElementSize } from "./contracts/dom-space";
 
 export class WindowResizeTriggerClock

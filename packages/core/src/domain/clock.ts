@@ -1,4 +1,4 @@
-import type { ClockPort } from "./ports";
+import type { ClockPort } from "../ports";
 
 export abstract class BaseClock implements ClockPort {
   // TODO: Clock開始直後にsimulatorから呼ばれるまでにinactiveになる可能性が残るため長めに設定。初回Clock時に確実に実行する機構が必要。

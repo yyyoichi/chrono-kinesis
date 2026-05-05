@@ -2,11 +2,9 @@ import {
   ActivityTransition,
   type ActivityTransitionOptions,
   BaseClock,
-  type ClockPort,
-  type GateReadablePort,
-  type PhysicsPort,
   type SimulationState,
 } from "../domain";
+import type { ClockPort, GateReadablePort, PhysicsPort } from "../ports";
 
 type DialogGateClockOptions =
   | {

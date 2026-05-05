@@ -1,4 +1,5 @@
-import { BaseClock, type TriggerReadablePort } from "../domain";
+import { BaseClock } from "../domain";
+import type { TriggerReadablePort } from "../ports";
 
 type IntersectionTriggerClockOptions = {
   orientation?: IntersectionOrientation;

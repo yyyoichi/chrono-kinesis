@@ -4,7 +4,7 @@ import type {
   KineticsPort,
   PhysicsPort,
   VectorReadablePort,
-} from "../domain/ports";
+} from "../ports";
 
 export type SimulationContext = {
   clock: ClockPort;

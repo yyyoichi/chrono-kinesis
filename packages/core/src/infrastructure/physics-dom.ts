@@ -1,5 +1,5 @@
 import type { SimulationState } from "../domain/models/simulation-state";
-import type { PhysicsPort } from "../domain/ports";
+import type { PhysicsPort } from "../ports";
 
 type StyleRecipe = {
   transform: string[];

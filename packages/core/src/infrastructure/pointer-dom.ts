@@ -1,12 +1,12 @@
-import {
-  BaseClock,
-  type ClockPort,
-  type DisposablePort,
-  type GateReadablePort,
-  type PositionReadablePort,
-  type SnapshotPort,
-  type VectorReadablePort,
-} from "../domain";
+import { BaseClock } from "../domain";
+import type {
+  ClockPort,
+  DisposablePort,
+  GateReadablePort,
+  PositionReadablePort,
+  SnapshotPort,
+  VectorReadablePort,
+} from "../ports";
 
 type PrimaryPointerDownGateClockOption = {
   // pointerdown後、要素外でのpointerupイベントを拾うかどうか。デフォルトで拾います。

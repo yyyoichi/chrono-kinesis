@@ -1,4 +1,4 @@
-import type { SnapshotPort } from "../domain/ports/snapshot-port";
+import type { SnapshotPort } from "../ports/snapshot-port";
 
 export class FrameSnapshotRegistry {
   private readonly registry = new Set<SnapshotPort>();
