@@ -1,3 +1,4 @@
+export * from "./adaptors";
 export * from "./application";
 export * from "./chronos";
 export * from "./domain";
