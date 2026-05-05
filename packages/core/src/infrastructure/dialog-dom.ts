@@ -1,4 +1,5 @@
-import { ActivityTransition, type ActivityTransitionOptions, BaseClock } from "../domain";
+import { BaseClock } from "../chronos";
+import { ActivityTransition, type ActivityTransitionOptions } from "../domain";
 import type { ClockPort, GateReadablePort, PhysicsPort } from "../ports";
 import type { SimulationState } from "../state";
 

@@ -1,4 +1,4 @@
-import { BaseClock } from "../domain";
+import { BaseClock } from "../chronos";
 import type { TriggerReadablePort } from "../ports";
 
 type IntersectionTriggerClockOptions = {
