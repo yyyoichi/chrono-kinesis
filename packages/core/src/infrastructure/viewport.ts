@@ -5,7 +5,7 @@ import {
   type SizeReadablePort,
   type TriggerReadablePort,
 } from "../domain";
-import { WindowResizeTriggerClock } from "./clock-dom";
+import { WindowResizeTriggerClock } from "./resize-dom";
 
 interface ResizeTriggerPort
   extends ClockPort,
