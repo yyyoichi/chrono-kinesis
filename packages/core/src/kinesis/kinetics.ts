@@ -1,6 +1,6 @@
 import type { EnginePort, EngineResult, KineticsPort, VectorReadablePort } from "../ports";
 import type { SimulationState } from "../state";
-import { SpringEngine } from "./engines/spring";
+import { SpringEngine } from "./engines/spring-engine";
 import type { Options } from "./options";
 
 export class Kinetics implements KineticsPort, VectorReadablePort {
