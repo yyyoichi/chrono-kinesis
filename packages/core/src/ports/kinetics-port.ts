@@ -1,4 +1,4 @@
-import type { SimulationState } from "../domain/models/simulation-state";
+import type { SimulationState } from "../state";
 import type { ActivityPort } from "./activity-port";
 import type { SnapshotPort } from "./snapshot-port";
 

@@ -5,7 +5,7 @@ import type {
   SnapshotPort,
   VectorReadablePort,
 } from "../ports";
-import type { SimulationState } from "./models/simulation-state";
+import type { SimulationState } from "../state";
 
 type EngineResult = {
   position: number;
