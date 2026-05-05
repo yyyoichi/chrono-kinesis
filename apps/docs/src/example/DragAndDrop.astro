@@ -16,15 +16,17 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     CenterAlignedPosition,
     ClockComposer,
     Simulator,
-    ElementPhysics,
-    ElementRect,
     GateConditionalVector,
     Kinetics,
+    SpringEngine,
+  } from "@yyyoichi/chrono-kinesis";
+  import {
+    ElementPhysics,
+    ElementRect,
     PrimaryPointerDownGateClock,
     PrimaryPointerPositionClock,
-    SpringEngine,
     WindowResizeTriggerClock,
-  } from "@yyyoichi/chrono-kinesis";
+  } from "@yyyoichi/chrono-kinesis/dom";
 
   const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 

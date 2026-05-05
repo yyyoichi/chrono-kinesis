@@ -32,15 +32,17 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 <script>
   import {
     Simulator,
-    DialogGateClock,
-    DialogSilentClosePhysics,
-    ElementPhysics,
-    ElementRect,
     GateConditionalVector,
     Kinetics,
     OffsetPosition,
     SpringEngine,
   } from "@yyyoichi/chrono-kinesis";
+  import {
+    DialogGateClock,
+    DialogSilentClosePhysics,
+    ElementPhysics,
+    ElementRect,
+  } from "@yyyoichi/chrono-kinesis/dom";
   const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 
   const dialogEl = document.getElementById(

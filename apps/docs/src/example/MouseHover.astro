@@ -15,12 +15,14 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   import {
     ClockComposer,
     Simulator,
+    TeleportKinetics,
+  } from "@yyyoichi/chrono-kinesis";
+  import {
     ElementPhysics,
     ElementRect,
     PrimaryPointerPositionClock,
-    TeleportKinetics,
     WindowResizeTriggerClock,
-  } from "@yyyoichi/chrono-kinesis";
+  } from "@yyyoichi/chrono-kinesis/dom";
   const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 
   const windowResizeTriggerClock = new WindowResizeTriggerClock();

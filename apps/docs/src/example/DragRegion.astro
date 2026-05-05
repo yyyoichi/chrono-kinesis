@@ -35,16 +35,18 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     Simulator,
     GateConditionalVector,
     PositionInRegionGate,
-    PrimaryPointerDownGateClock,
-    PrimaryPointerPositionClock,
     SpringEngine,
     TeleportKinetics,
+    TriggerReducer,
+  } from "@yyyoichi/chrono-kinesis";
+  import {
+    PrimaryPointerDownGateClock,
+    PrimaryPointerPositionClock,
     ElementRect,
     WindowResizeTriggerClock,
     ParentSwitchTrigger,
-    TriggerReducer,
     ElementPhysics,
-  } from "@yyyoichi/chrono-kinesis";
+  } from "@yyyoichi/chrono-kinesis/dom";
 
   // 1. ドラッグ開始
   // 2. ドラッグ中->ボックスをドラッグ座標に追従させる
