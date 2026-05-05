@@ -1,4 +1,4 @@
-export type ActivityTransitionState = {
+type ActivityTransitionState = {
   current: number;
   started: boolean;
   stopped: boolean;
