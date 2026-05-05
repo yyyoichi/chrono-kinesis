@@ -14,14 +14,16 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 <script>
   import {
     ClockComposer,
-    DefaultSimulatorService,
+    Simulator,
+    TeleportKinetics,
+  } from "@yyyoichi/chrono-kinesis";
+  import {
     ElementPhysics,
     ElementRect,
     PrimaryPointerPositionClock,
-    TeleportKinetics,
     WindowResizeTriggerClock,
-  } from "@yyyoichi/chrono-kinesis";
-  const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
+  } from "@yyyoichi/chrono-kinesis/dom";
+  const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 
   const windowResizeTriggerClock = new WindowResizeTriggerClock();
   const boxEl = document.getElementById("mouse-hover-box")!;

@@ -20,16 +20,22 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./dom": {
+      "types": "./dist/dom/index.d.ts",
+      "import": "./dist/dom/index.js",
+      "require": "./dist/dom/index.cjs"
     }
   },
   "files": [
     "dist",
+    "dist/dom",
     "LICENSE",
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "build": "tsup src/index.ts src/dom/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts src/dom/index.ts --format cjs,esm --watch --dts",
     "lint": "biome lint ./src"
   },
   "keywords": [

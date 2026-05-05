@@ -14,17 +14,19 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 <script>
   import {
     ClockComposer,
-    DefaultSimulatorService,
-    ElementPhysics,
-    ElementRect,
-    PrimaryPointerPositionClock,
+    Simulator,
     SpringEngine,
     TeleportKinetics,
     VectorComposer,
-    WindowResizeTriggerClock,
     type VectorReadablePort,
   } from "@yyyoichi/chrono-kinesis";
-  const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
+  import {
+    ElementPhysics,
+    ElementRect,
+    PrimaryPointerPositionClock,
+    WindowResizeTriggerClock,
+  } from "@yyyoichi/chrono-kinesis/dom";
+  const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 
   const containerEl = document.getElementById("mouse-snake-container")!;
   const boxEl = document.getElementById("mouse-snake-box")!;

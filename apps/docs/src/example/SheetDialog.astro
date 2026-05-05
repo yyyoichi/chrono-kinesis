@@ -31,17 +31,19 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 
 <script>
   import {
-    DefaultSimulatorService,
-    DialogGateClock,
-    DialogSilentClosePhysics,
-    ElementPhysics,
-    ElementRect,
+    Simulator,
     GateConditionalVector,
     Kinetics,
     OffsetPosition,
     SpringEngine,
   } from "@yyyoichi/chrono-kinesis";
-  const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
+  import {
+    DialogGateClock,
+    DialogSilentClosePhysics,
+    ElementPhysics,
+    ElementRect,
+  } from "@yyyoichi/chrono-kinesis/dom";
+  const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 
   const dialogEl = document.getElementById(
     "sheet-dialog",
