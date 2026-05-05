@@ -76,13 +76,10 @@ export class DefaultSimulatorService implements SimulatorService {
 
   public destroy(): void {
     this.pause();
-    for (const { clock, disposables, phaseObservers } of this.contexts) {
+    for (const { clock, disposables } of this.contexts) {
       clock.destroy();
       for (const d of disposables || []) {
         d.destroy();
-      }
-      for (const o of phaseObservers || []) {
-        o.destroy();
       }
     }
     this.contexts = [];
@@ -120,24 +117,16 @@ export class DefaultSimulatorService implements SimulatorService {
   private applyStep(delta: number, now: number): void {
     this.snapshots.snapshotAll(now);
 
-    for (const { clock, kinetics, target, phaseObservers } of this.contexts) {
+    for (const { clock, kinetics, target } of this.contexts) {
       // event コールバック直後にnotifyの処理量によってinactiveになる可能性があるため、
       // step開始時点のclockの状態を保持する。
       const clockIsActive = clock.isActive();
-
-      if (phaseObservers) {
-        for (const o of phaseObservers) o.notify("snapshotted");
-      }
 
       if (!clockIsActive && !kinetics.isActive()) {
         continue;
       }
 
       kinetics.compute(delta, target.vector());
-
-      if (phaseObservers) {
-        for (const o of phaseObservers) o.notify("computed");
-      }
     }
 
     for (const { kinetics, physics } of this.contexts) {
