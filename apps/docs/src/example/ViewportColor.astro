@@ -39,7 +39,7 @@ const { style, ...props } = Astro.props;
 
 <script>
   import {
-    DefaultSimulatorService,
+    Simulator,
     DomVisualizer,
     LinearScaledVector,
     Kinetics,
@@ -48,7 +48,7 @@ const { style, ...props } = Astro.props;
     ElementPhysics,
     IntersectionTriggerClock,
   } from "@yyyoichi/chrono-kinesis";
-  const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
+  const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 
   // 要素が順スクロールでrootの50%に達したらOpacityを1にして、
   // 逆スクロールで10%に達したら0にする例です。

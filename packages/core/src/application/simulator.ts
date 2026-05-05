@@ -1,13 +1,12 @@
-import type { SimulationContext } from "./services/simulation-context";
-import type { SimulatorService } from "./services/simulator-service";
-import { DefaultFrameSnapshotRegistry } from "./snapshot-registry";
+import type { SimulationContext } from "./context";
+import { FrameSnapshotRegistry } from "./snapshot-registry";
 
 type SimulatorOptions = {
   // 物理演算のステップ時間（秒）。小さすぎるとCPU負荷が高くなり、大きすぎると物理演算が不安定になる可能性がある。デフォルトは1/60秒（約16.67ms）。
   fixedStepSec?: number;
 };
 
-export class DefaultSimulatorService implements SimulatorService {
+export class Simulator {
   private static readonly DEFAULT_FIXED_STEP_SEC = 1 / 60;
   private static readonly MAX_FRAME_DELTA_SEC = 0.05;
 
@@ -18,11 +17,11 @@ export class DefaultSimulatorService implements SimulatorService {
   private accumulatedLagSec = 0;
   private fixedStepSec: number;
 
-  private snapshots = new DefaultFrameSnapshotRegistry();
+  private snapshots = new FrameSnapshotRegistry();
 
   constructor(options: SimulatorOptions = {}) {
-    this.fixedStepSec = DefaultSimulatorService.DEFAULT_FIXED_STEP_SEC;
-    this.setFixedStepSec(options.fixedStepSec ?? DefaultSimulatorService.DEFAULT_FIXED_STEP_SEC);
+    this.fixedStepSec = Simulator.DEFAULT_FIXED_STEP_SEC;
+    this.setFixedStepSec(options.fixedStepSec ?? Simulator.DEFAULT_FIXED_STEP_SEC);
   }
 
   public add(context: SimulationContext): void {
@@ -98,7 +97,7 @@ export class DefaultSimulatorService implements SimulatorService {
     this.lastFrameTimeMs = now;
 
     // 1. 最大値を制限しつつ蓄積（ラグ対策）
-    this.accumulatedLagSec += Math.min(elapsedSec, DefaultSimulatorService.MAX_FRAME_DELTA_SEC);
+    this.accumulatedLagSec += Math.min(elapsedSec, Simulator.MAX_FRAME_DELTA_SEC);
 
     // 2. 蓄積された時間が1ステップ分を超えている間、物理を回す
     while (this.accumulatedLagSec >= this.fixedStepSec) {

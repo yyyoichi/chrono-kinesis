@@ -14,7 +14,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 <script>
   import {
     ClockComposer,
-    DefaultSimulatorService,
+    Simulator,
     ElementPhysics,
     ElementRect,
     PrimaryPointerPositionClock,
@@ -24,7 +24,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
     WindowResizeTriggerClock,
     type VectorReadablePort,
   } from "@yyyoichi/chrono-kinesis";
-  const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
+  const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 
   const containerEl = document.getElementById("mouse-snake-container")!;
   const boxEl = document.getElementById("mouse-snake-box")!;

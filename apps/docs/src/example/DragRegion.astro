@@ -32,7 +32,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   import {
     CenterAlignedPosition,
     ClockComposer,
-    DefaultSimulatorService,
+    Simulator,
     GateConditionalVector,
     PositionInRegionGate,
     PrimaryPointerDownGateClock,
@@ -51,7 +51,7 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   // 3. ポインターがリージョンを跨いだらボックスを移動（appendChild）させる
   // 4. ドロップ終了->本来のボックスの描画座標（padding-box）に移動させる
 
-  const simulation = new DefaultSimulatorService({ fixedStepSec: 1 / 20 });
+  const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 
   const containerEl = document.getElementById("drag-to-region-container")!;
   const regionEl = document.getElementById("drag-to-region-region")!;

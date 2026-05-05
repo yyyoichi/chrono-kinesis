@@ -1,6 +1,6 @@
 import type { SnapshotPort } from "../domain/ports/snapshot-port";
 
-export class DefaultFrameSnapshotRegistry {
+export class FrameSnapshotRegistry {
   private readonly registry = new Set<SnapshotPort>();
   private readonly lastVisited = new WeakMap<SnapshotPort, number>();
 
