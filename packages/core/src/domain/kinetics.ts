@@ -79,12 +79,6 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
   public get state() {
     return this._state;
   }
-  /**
-   * @deprecated Use state.activityLevel instead.
-   */
-  public get activityScore() {
-    return this._state.activityLevel;
-  }
 
   public setEngine(engine: EnginePort | EnginePort[]) {
     if (!Array.isArray(engine)) {

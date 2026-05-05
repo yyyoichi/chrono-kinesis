@@ -1,6 +1,5 @@
 import type { SimulationState } from "../domain/models/simulation-state";
 import type { PhysicsPort } from "../domain/ports";
-import type { DomPhysicsSource } from "./contracts/dom-physics-source";
 
 type StyleRecipe = {
   transform: string[];
@@ -95,20 +94,5 @@ export class ElementPhysics implements PhysicsPort {
       // biome-ignore lint/suspicious/noExplicitAny: CSSStyleDeclarationの型定義が厳しすぎるため、anyでキャストして代入する
       (this.element.style as any)[key] = val ?? "";
     }
-  }
-}
-
-/**
- * @deprecated 依存関係複雑のため。DomSourceの非推奨のため。
- */
-export class DomPhysics implements PhysicsPort {
-  constructor(
-    private readonly source: DomPhysicsSource,
-    private visualizer: DomVisualizer,
-  ) {}
-
-  public apply(state: SimulationState) {
-    const style = this.visualizer.calculate(state);
-    this.source.apply(style);
   }
 }
