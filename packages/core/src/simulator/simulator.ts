@@ -73,6 +73,16 @@ export class Simulator {
     this.accumulatedLagSec = 0;
   }
 
+  public remove(context: SimulationContext): void {
+    const index = this.contexts.findIndex(({ target }) => target === context.target);
+    if (index === -1) {
+      console.warn("[Simulator] Attempted to remove a context that is not registered.");
+      return;
+    }
+    this.contexts = this.contexts.splice(index, 1);
+    context.clock.destroy();
+  }
+
   public destroy(): void {
     this.pause();
     for (const { clock } of this.contexts) {
