@@ -1,17 +1,8 @@
-import type {
-  ClockPort,
-  DisposablePort,
-  KineticsPort,
-  PhysicsPort,
-  VectorReadablePort,
-} from "../ports";
+import type { ClockPort, KineticsPort, PhysicsPort, VectorReadablePort } from "../ports";
 
 export type SimulationContext = {
   clock: ClockPort;
-  kinetics: KineticsPort;
   target: VectorReadablePort;
+  kinetics: KineticsPort;
   physics: PhysicsPort | PhysicsPort[];
-  // simulation終了時にSimulator.destroy()によってdestroyされるべきインスタンス群。
-  // Clockはauto disposeされるため、ここに含める必要は必ずしもない。
-  disposables?: DisposablePort[];
 };

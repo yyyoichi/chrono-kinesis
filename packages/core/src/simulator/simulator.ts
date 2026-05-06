@@ -75,11 +75,8 @@ export class Simulator {
 
   public destroy(): void {
     this.pause();
-    for (const { clock, disposables } of this.contexts) {
+    for (const { clock } of this.contexts) {
       clock.destroy();
-      for (const d of disposables || []) {
-        d.destroy();
-      }
     }
     this.contexts = [];
   }
