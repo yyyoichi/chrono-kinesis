@@ -1,9 +1,9 @@
-import type { EnginePort, EngineResult, KineticsPort, VectorReadablePort } from "../ports";
+import type { EnginePort, EngineResult, KineticsPort } from "../ports";
 import type { SimulationState } from "../state";
 import { SpringEngine } from "./engines/spring-engine";
 import type { Options } from "./options";
 
-export class Kinetics implements KineticsPort, VectorReadablePort {
+export class Kinetics implements KineticsPort {
   public static readonly ACTIVITY_THRESHOLD = 0.001;
   private _state: SimulationState = {
     ndim: 0,
