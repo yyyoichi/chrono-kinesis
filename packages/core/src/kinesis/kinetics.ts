@@ -1,9 +1,15 @@
-import type { EnginePort, EngineResult, KineticsPort, VectorReadablePort } from "../ports";
+import type {
+  ClonableKineticsPort,
+  EnginePort,
+  EngineResult,
+  KineticsPort,
+  VectorReadablePort,
+} from "../ports";
 import type { SimulationState } from "../state";
 import { SpringEngine } from "./engines/spring-engine";
 import type { Options } from "./options";
 
-export class Kinetics implements KineticsPort, VectorReadablePort {
+export class Kinetics implements KineticsPort, ClonableKineticsPort, VectorReadablePort {
   public static readonly ACTIVITY_THRESHOLD = 0.001;
   private _state: SimulationState = {
     ndim: 0,
@@ -65,6 +71,20 @@ export class Kinetics implements KineticsPort, VectorReadablePort {
 
   public get state() {
     return this._state;
+  }
+
+  public clone(): KineticsPort {
+    const clone = new Kinetics([]);
+    clone._state = {
+      ndim: this._state.ndim,
+      absolute: [...this._state.absolute],
+      relative: [...this._state.relative],
+      velocity: [...this._state.velocity],
+      activityLevel: this._state.activityLevel,
+    };
+    clone.engines = [...this.engines];
+    clone._snapshot = [...this._snapshot];
+    return clone;
   }
 
   public setEngine(engine: EnginePort | EnginePort[]) {

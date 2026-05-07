@@ -5,3 +5,7 @@ export interface KineticsPort extends ActivityPort {
   compute(dt: number, vector: Readonly<number[]>): void;
   readonly state: SimulationState;
 }
+
+export interface ClonableKineticsPort {
+  clone(): KineticsPort;
+}
