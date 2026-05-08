@@ -6,6 +6,6 @@ export interface KineticsPort extends ActivityPort {
   readonly state: SimulationState;
 }
 
-export interface ClonableKineticsPort {
+export interface CloneableKineticsPort {
   clone(): KineticsPort;
 }
