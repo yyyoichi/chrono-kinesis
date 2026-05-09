@@ -16,6 +16,26 @@ export default defineConfig({
       social: [
         { icon: "github", label: "GitHub", href: "https://github.com/yyyoichi/chrono-kinesis" },
       ],
+      sidebar: [
+        { label: 'Home', link: '/' },
+        {
+					label: 'Guides',
+					items: [
+						{ label: 'Example Guide', slug: 'guides/example' },
+					],
+				},
+        {
+          label: 'Reference',
+          items: [
+            // @ts-ignore
+            {
+              autogenerate: {
+                directory: 'reference',
+              },
+            },
+          ],
+        },
+      ],
     }),
   ],
 });
