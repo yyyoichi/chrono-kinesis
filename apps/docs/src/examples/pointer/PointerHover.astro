@@ -1,11 +1,10 @@
 ---
-export const title = "マウス追従";
 type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 ---
 
-<div id="mouse-hover-container" {...Astro.props}>
+<div id="pointer-hover-container" {...Astro.props}>
   <div
-    id="mouse-hover-box"
+    id="pointer-hover-box"
     style="width: 1rem; height: 1rem; background-color: cadetblue"
   >
   </div>
@@ -26,14 +25,14 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 
   const windowResizeTriggerClock = new WindowResizeTriggerClock();
-  const boxEl = document.getElementById("mouse-hover-box")!;
+  const boxEl = document.getElementById("pointer-hover-box")!;
   const boxRect = new ElementRect(boxEl, {
     // windowリサイズ時に位置を再度取得します。
     trigger: windowResizeTriggerClock,
   });
   // container内のpointermoveを監視します。
   const pointerPositionClock = new PrimaryPointerPositionClock(
-    document.getElementById("mouse-hover-container")!,
+    document.getElementById("pointer-hover-container")!,
     {
       initPosition: boxRect,
     },

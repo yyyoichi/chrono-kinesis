@@ -1,11 +1,10 @@
 ---
-export const title = "アニメーションDOM追従";
 type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
 ---
 
-<div id="mouse-snake-container" {...Astro.props}>
+<div id="pointer-snake-container" {...Astro.props}>
   <div
-    id="mouse-snake-box"
+    id="pointer-snake-box"
     style="width: 1rem; height: 1rem; background-color: cadetblue; margin-top: 0;"
   >
   </div>
@@ -28,8 +27,8 @@ type Props = Omit<astroHTML.JSX.HtmlHTMLAttributes, "id">;
   } from "@yyyoichi/chrono-kinesis/dom";
   const simulation = new Simulator({ fixedStepSec: 1 / 20 });
 
-  const containerEl = document.getElementById("mouse-snake-container")!;
-  const boxEl = document.getElementById("mouse-snake-box")!;
+  const containerEl = document.getElementById("pointer-snake-container")!;
+  const boxEl = document.getElementById("pointer-snake-box")!;
 
   const windowResizeTrigger = new WindowResizeTriggerClock();
   const boxRect = new ElementRect(boxEl, {
