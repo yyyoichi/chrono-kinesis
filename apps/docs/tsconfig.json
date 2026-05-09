@@ -4,6 +4,8 @@
   "exclude": ["dist"],
   "compilerOptions": {
     "paths": {
+      "@components/*": ["./src/components/*"],
+      "@assets/*": ["./src/assets/*"],
       "@yyyoichi/chrono-kinesis": ["../../packages/core/src/index.ts"]
     }
   }
