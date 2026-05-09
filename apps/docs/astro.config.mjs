@@ -19,11 +19,14 @@ export default defineConfig({
       sidebar: [
         { label: 'Home', link: '/' },
         {
-					label: 'Guides',
-					items: [
-						{ label: 'Example Guide', slug: 'guides/example' },
-					],
-				},
+          label: 'Examples',
+          items: [
+            { label: 'Pointer', slug: 'examples/pointer' },
+            { label: 'Dialog', slug: 'examples/dialog' },
+            { label: 'Drag', slug: 'examples/drag' },
+            { label: 'Viewport', slug: 'examples/viewport' },
+          ],
+        },
         {
           label: 'Reference',
           items: [

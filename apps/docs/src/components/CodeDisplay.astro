@@ -1,0 +1,61 @@
+---
+import { Code, TabItem, Tabs } from "@astrojs/starlight/components";
+import { getSource } from "./file";
+
+interface Props {
+  fileName: string;
+}
+
+const { fileName } = Astro.props;
+
+const match = getSource(fileName);
+
+const normalizeCode = (code: string) => {
+  const normalized = code.replace(/\r\n/g, "\n");
+  const lines = normalized.split("\n");
+  const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
+  const minIndent =
+    nonEmptyLines.length > 0
+      ? Math.min(
+          ...nonEmptyLines.map((line) => {
+            const match = line.match(/^[ \t]*/);
+            return match ? match[0].length : 0;
+          }),
+        )
+      : 0;
+
+  return lines
+    .map((line) => line.slice(minIndent).replace(/[ \t]+$/g, ""))
+    .join("\n")
+    .replace(/^[ \t]+$/gm, "")
+    .trim();
+};
+
+const javascriptCode = normalizeCode(
+  match.source.match(/<script>([\s\S]*?)<\/script>/)?.[1] ?? "",
+);
+const htmlCode = normalizeCode(
+  match.source
+    .replace(/^---[\s\S]*?---\n*/, "")
+    .replace(/<script>[\s\S]*?<\/script>/, "")
+    .replace(/\{\.\.\.Astro\.props\}/g, ""),
+);
+
+const demoStyle =
+  "width: 100%; height: 200px; overflow: hidden; background-color: var(--ec-frm-edBg); border: var(--ec-brdWd) solid var(--ec-brdCol); border-radius: calc(var(--ec-brdRad) + var(--ec-brdWd));";
+---
+
+<Tabs>
+  <TabItem label="Demo">
+    <match.Component style={demoStyle} />
+  </TabItem>
+  <TabItem label="JavaScript">
+    <Code code={javascriptCode} lang="js" wrap={false} />
+  </TabItem>
+  <TabItem label="HTML">
+    <Code code={htmlCode} lang="html" wrap={false} />
+  </TabItem>
+  <TabItem label="Astro File">
+    <Code code={match.source} lang="astro" wrap={false} />
+  </TabItem>
+</Tabs>
