@@ -1,0 +1,11 @@
+---
+title: ClockPort
+---
+
+## Interface
+
+```ts
+export interface ClockPort extends ActivityPort, DisposablePort {
+  onHeartbeat(cb: () => void): void;
+}
+```

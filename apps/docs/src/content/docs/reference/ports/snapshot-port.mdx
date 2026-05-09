@@ -1,0 +1,12 @@
+---
+title: SnapshotPort
+---
+
+## Interface
+
+```ts
+export interface SnapshotPort {
+  snapshot(now: number): void;
+  dependencies?(): SnapshotPort[];
+}
+```
