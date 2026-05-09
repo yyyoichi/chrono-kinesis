@@ -23,7 +23,7 @@ npm install @yyyoichi/chrono-kinesis
 - **Swappable motion engines**: Supports spring and linear motion engines, and applies not only to translate but also to opacity and user-defined CSS properties.
 - **Rich examples**: Includes practical examples such as modal dialogs and drag-and-drop, with the goal of providing a broad set of real-world patterns.
 
-## アーキテクチャ
+## Architecture
 
 ```typescript
 const simulation = new Simulator();
@@ -41,5 +41,13 @@ simulation.run();
 
 - **clock**: Defines when motion starts.
 - **target**: Defines the destination position or vector.
-- **kinetics**: Defines how the object moves toward the target.
-- **physics**: Defines what receives the motion result (for example, an HTMLElement).
+- **kinetics**: Defines how motion progresses toward the target.
+- **physics**: Defines where the computed motion result is applied (for example, an HTMLElement).
+
+## Reference
+
+https://chrono-kinesis.yyyoichi.com/
+
+## LISENCE
+
+MIT

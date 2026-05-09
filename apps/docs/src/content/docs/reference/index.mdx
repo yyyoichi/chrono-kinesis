@@ -5,9 +5,82 @@ title: API Reference
 
 ## Interface
 
-SimulationContext
+`Simulator` acts as an orchestrator that controls `requestAnimationFrame` based on `SimulationContext`.
+
+```typescript
+const simulation = new Simulator();
+type SimulationContext = {
+  clock: ClockPort;
+  target: VectorReadablePort;
+  kinetics: KineticsPort;
+  physics: PhysicsPort | PhysicsPort[];
+};
+simulation.add(context);
+simulation.run();
+```
+
+- **clock**: Defines when motion starts.
+- **target**: Defines the destination position or vector.
+- **kinetics**: Defines how motion progresses toward the target.
+- **physics**: Defines where the computed motion result is applied (for example, an HTMLElement).
+
+### /ports
+
+See the full contracts in [Ports](./ports/).
+
+ClockPort, VectorReadablePort, KineticsPort, and PhysicsPort are all interfaces.
+Using interfaces allows overlapping implementations across responsibilities.
+For example, `pointerdown` can act as the `clock` that starts the simulation while its coordinates are also used as the `target`.
 
 ## Implements
+
+### Simulator
+
+`Simulator` starts clock-driven simulation when `run()` is called explicitly.
+Use `pause()` to suspend execution, and `destroy()` to dispose the simulation completely.
+
+```typescript
+class Simulator {
+  run(): void;
+  pause(): void;
+  destroy(): void;
+}
+```
+
+#### Internal Implementation
+
+For each `requestAnimationFrame` tick, clock-driven simulation executes three steps: `snapshot`, `compute`, and `apply`.
+
+1. In `snapshot`, `VectorReadablePort.snapshot` is called for every target to capture frame-stable vectors.
+2. In `compute`, `kinetics` advances the state toward the target vector.
+3. In `apply`, the state computed by `kinetics` is applied to the actual output target.
+
+```typescript
+class Simulator {
+  private applyStep(delta: number, now: number): void {
+    this.snapshots.snapshotAll(now);
+
+    for (const { clock, kinetics, target } of this.contexts) {
+      // ...
+      kinetics.compute(delta, target.vector());
+    }
+
+    for (const { kinetics, physics } of this.contexts) {
+      // ...
+      physics.apply(kinetics.state);
+    }
+  }
+}
+```
+
+#### Auto Pause
+
+`Simulator` pauses automatically when clocks remain inactive for a period and kinetics motion stays below a small threshold.
+
+#### Cleanup
+
+`destroy()` automatically calls `ClockPort.destroy` for all registered clocks.
+As long as `destroy()` is called correctly, you usually do not need to handle DOM listener cleanup manually.
 
 ### /chronos
 
