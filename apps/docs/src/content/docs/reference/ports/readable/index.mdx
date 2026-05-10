@@ -12,3 +12,11 @@ title: Readable Ports
 - [SizeReadablePort](./size-readable-port)
 - [RatioReadablePort](./ratio-readable-port)
 - [VectorReadablePort](./vector-readable-port)
+
+## 共通規約
+
+すべての Readable Port は [`SnapshotPort`](../snapshot-port) を継承しなければならない。
+`snapshot()` が呼ばれた時点で値を内部に確定し、次の `snapshot()` までその値を返し続けることを期待する。
+
+オブジェクトを返すメソッド（`vector()`・`position()`・`size()` など）は、同一 tick 内では常に同じオブジェクト参照（`===` で等価）を返すこと。
+配列の内容が変化しない限り、`snapshot()` をまたいでも同じ参照を返し続けてよい。

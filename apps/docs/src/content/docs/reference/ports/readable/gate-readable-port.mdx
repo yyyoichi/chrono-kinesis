@@ -9,3 +9,17 @@ export interface GateReadablePort extends SnapshotPort {
   readonly gate: 0 | 1;
 }
 ```
+
+## PURPOSE
+
+ON/OFF の 2 値ゲート状態を提供するポート。
+ポインターの標準ボタンが押されているかどうかなど、バイナリなイベント状態を表現する。
+
+| プロパティ | 説明 |
+| --- | --- |
+| `gate` | `0`（非アクティブ）または `1`（アクティブ） |
+
+## NOTE
+
+`SnapshotPort` を継承しなければならない。
+`snapshot()` が呼ばれたとき、その時点の値を内部に確定して保持し、次の `snapshot()` まで `gate` の値が変化しないことを期待する。

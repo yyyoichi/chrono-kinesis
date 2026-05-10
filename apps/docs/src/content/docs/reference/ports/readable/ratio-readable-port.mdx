@@ -9,3 +9,17 @@ export interface RatioReadablePort extends SnapshotPort {
   readonly ratio: number; // 0..1
 }
 ```
+
+## PURPOSE
+
+`position` や `size` などを入力に、動的に計算される 0 〜 1 の比率値を提供するポート。
+スクロール位置や要素の占有割合など、割合に変換する必要がある場合に使用する。
+
+| プロパティ | 説明 |
+| --- | --- |
+| `ratio` | `0.0` 〜 `1.0` の比率値 |
+
+## NOTE
+
+`SnapshotPort` を継承しなければならない。
+`snapshot()` が呼ばれたとき、その時点の値を内部に確定して保持し、次の `snapshot()` まで `ratio` の値が変化しないことを期待する。

@@ -9,3 +9,19 @@ export interface PositionReadablePort extends SnapshotPort {
   position(): Readonly<[number, number]>;
 }
 ```
+
+## PURPOSE
+
+2D 座標（x, y）を提供するポート。
+ポインターの位置や DOM 要素の位置など、ペア値で座標を表現する場合に利用する。
+
+| メソッド | 説明 |
+| --- | --- |
+| `position()` | スナップショット時点の `[x, y]` 座標を返す |
+
+## NOTE
+
+`SnapshotPort` を継承しなければならない。
+`snapshot()` が呼ばれたとき、その時点の座標タプルを内部に確定して保持することを期待する。
+同一 tick 内では `position()` は常に同じ配列オブジェクト（`===` で等価）を返さなければならない。
+座標が変化しない場合は、`snapshot()` をまたいで同じ参照を返し続けてよい。

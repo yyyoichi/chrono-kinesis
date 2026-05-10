@@ -9,3 +9,17 @@ export interface ProgressReadablePort extends SnapshotPort {
   readonly progress: number; // 0..1
 }
 ```
+
+## PURPOSE
+
+0 〜 1 の進捗値を提供するポート。
+スクロール量やアニメーションの進行割合など、割合で表現できる状態を渡す際に使用する。
+
+| プロパティ | 説明 |
+| --- | --- |
+| `progress` | `0.0` ～ `1.0` の進捗値 |
+
+## NOTE
+
+`SnapshotPort` を継承しなければならない。
+`snapshot()` が呼ばれたとき、その時点の値を内部に確定して保持し、次の `snapshot()` まで `progress` の値が変化しないことを期待する。

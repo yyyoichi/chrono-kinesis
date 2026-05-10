@@ -9,3 +9,17 @@ export interface CloneableKineticsPort {
   clone(): KineticsPort;
 }
 ```
+
+## PURPOSE
+
+`KineticsPort` の複製を生成するためのポート。
+同じエンジン設定を持つ Kinetics を複数生成したい場合に利用する。
+
+| メソッド | 説明 |
+| --- | --- |
+| `clone()` | 現在の設定を引き継いだ新しい `KineticsPort` を返す |
+
+## NOTE
+
+`Kinetics` はこのポートを実装している。
+シミュレーション中の状態（位置・速度）もコピーされる。

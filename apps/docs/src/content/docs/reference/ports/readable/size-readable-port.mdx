@@ -9,3 +9,19 @@ export interface SizeReadablePort extends SnapshotPort {
   size(): Readonly<[number, number]>;
 }
 ```
+
+## PURPOSE
+
+幅・高さ（width, height）を提供するポート。
+例えば、DOM 要素のサイズをシミュレーションの入力として渡す際に使用する。
+
+| メソッド | 説明 |
+| --- | --- |
+| `size()` | スナップショット時点の `[width, height]` を返す |
+
+## NOTE
+
+`SnapshotPort` を継承しなければならない。
+`snapshot()` が呼ばれたとき、その時点のサイズタプルを内部に確定して保持することを期待する。
+同一 tick 内では `size()` は常に同じ配列オブジェクト（`===` で等価）を返さなければならない。
+サイズが変化しない場合は、`snapshot()` をまたいで同じ参照を返し続けてよい。

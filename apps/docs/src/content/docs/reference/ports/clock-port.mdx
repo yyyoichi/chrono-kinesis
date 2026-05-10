@@ -9,3 +9,20 @@ export interface ClockPort extends ActivityPort, DisposablePort {
   onHeartbeat(cb: () => void): void;
 }
 ```
+
+## PURPOSE
+
+外部イベント（ポインター操作・リサイズなど）を検知してシミュレーターを起床させるポート。
+`Simulator.add()` に渡すことで、イベント発生時にシミュレーションループを再開する。
+
+| メソッド | 説明 |
+| --- | --- |
+| `onHeartbeat(cb)` | イベント発生時に呼ばれるコールバックを登録する |
+| `isActive()` | クロックが現在イベントを発行中であれば `true` を返す（`ActivityPort` より） |
+| `destroy()` | イベントリスナーを解放する（`DisposablePort` より） |
+
+## NOTE
+
+`ActivityPort` と `DisposablePort` を継承する。
+シミュレーターは pause 中に heartbeat を受信すると `wake()` を呼んでループを再起動する。
+複数の Clock を束ねる場合は `ClockComposer` を使用する。

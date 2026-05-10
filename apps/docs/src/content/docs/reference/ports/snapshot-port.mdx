@@ -10,3 +10,19 @@ export interface SnapshotPort {
   dependencies?(): SnapshotPort[];
 }
 ```
+
+## PURPOSE
+
+各フレームの先頭で状態を確定（スナップショット）するためのポート。
+Simulator はフレームごとに `FrameSnapshotRegistry` を通じてすべての SnapshotPort を一括更新する。
+
+| メンバー | 説明 |
+| --- | --- |
+| `snapshot(now)` | 現在時刻 `now` を受け取り、内部状態をスナップショットとして確定する |
+| `dependencies?()` | このポートが依存する他の `SnapshotPort` の一覧を返す |
+
+## NOTE
+
+`snapshot(now)` が呼び出されたとき、ポートは現在の値を内部状態として確定して保持することを期待する。
+以降の読み取り（`gate` や `vector()` など）は、次の `snapshot()` が呼ばれるまでその確定値を返し続けなければならない。
+`dependencies()` を実装することで、依存ポートが先にスナップショットされることが保証される。

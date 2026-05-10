@@ -9,3 +9,19 @@ export interface TriggerReadablePort extends SnapshotPort {
   readonly trigger: 0 | 1;
 }
 ```
+
+## PURPOSE
+
+単発のイベント発火を表現するポート。
+`GateReadablePort` と違い、イベント発生時に一度だけ `1` になり、次のスナップショットで `0` に戻ることを期待する。
+ウィンドウのリサイズなど、状態変化のトリガーとして使用する。
+
+| プロパティ | 説明 |
+| --- | --- |
+| `trigger` | 発火中は `1`、非発火時は `0` |
+
+## NOTE
+
+`SnapshotPort` を継承しなければならない。
+`snapshot()` が呼ばれたとき、その時点の値を内部に確定して保持し、次の `snapshot()` まで `trigger` の値が変化しないことを期待する。
+イベントが発生した tick の `snapshot()` で `1` を確定し、次の `snapshot()` で `0` に戻ることを期待する。

@@ -9,3 +9,17 @@ export interface PhysicsPort {
   apply(state: SimulationState): void;
 }
 ```
+
+## PURPOSE
+
+`SimulationState` を受け取り、DOM などへ演算結果を反映するポート。
+Simulator は毎固定ステップの演算後に `apply()` を呼ぶ。
+
+| メソッド | 説明 |
+| --- | --- |
+| `apply(state)` | 位置・速度などの状態を外部（DOM など）へ書き出す |
+
+## NOTE
+
+`SimulationContext` では `PhysicsPort` を単体または配列で指定できる。
+複数の PhysicsPort を渡した場合、すべての `apply()` が同じ `state` で呼ばれる。
