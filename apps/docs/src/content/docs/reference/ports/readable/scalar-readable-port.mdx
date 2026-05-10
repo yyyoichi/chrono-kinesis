@@ -12,13 +12,13 @@ export interface ScalarReadablePort extends SnapshotPort {
 
 ## PURPOSE
 
-範囲の制限なしの連続数値を提供するポート。
+A port providing an unbounded continuous numeric value.
 
-| プロパティ | 説明 |
+| Property | Description |
 | --- | --- |
-| `scalar` | 範囲の制限ない連続値 |
+| `scalar` | An unbounded continuous value |
 
 ## NOTE
 
-`SnapshotPort` を継承しなければならない。
-`snapshot()` が呼ばれたとき、その時点の値を内部に確定して保持し、次の `snapshot()` まで `scalar` の値が変化しないことを期待する。
+Must inherit from `SnapshotPort`.
+When `snapshot()` is called, the port must capture the value at that moment and maintain it internally, ensuring that `scalar` does not change until the next `snapshot()`.

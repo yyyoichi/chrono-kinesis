@@ -13,17 +13,17 @@ export interface KineticsPort extends ActivityPort {
 
 ## PURPOSE
 
-多次元の運動演算を担うポート。
-Simulator は毎固定ステップで `compute()` を呼び、目標ベクトルへ向けて状態を更新する。
+A port for multidimensional motion computation.
+The Simulator calls `compute()` at each fixed timestep to update state toward the target vector.
 
-| メンバー | 説明 |
+| Member | Description |
 | --- | --- |
-| `compute(dt, vector)` | 目標ベクトルに向けて位置・速度を 1 ステップ分進める |
-| `state` | 現在の `SimulationState`（絶対位置・相対移動量・速度・活動量）を返す |
-| `isActive()` | 活動量が閾値を超えていれば `true` を返す（`ActivityPort` より） |
+| `compute(dt, vector)` | Advances position and velocity one step toward the target vector |
+| `state` | Returns the current `SimulationState` (absolute position, relative displacement, velocity, activity level) |
+| `isActive()` | Returns `true` if activity level exceeds threshold (from `ActivityPort`) |
 
 ## NOTE
 
-`ActivityPort` を継承する。
-デフォルト実装は `Kinetics` クラス。内部では次元ごとに `EnginePort.compute()` を呼んで更新する。
-`CloneableKineticsPort` を合わせて実装すると、同一設定の複製を生成できる。
+Inherits from `ActivityPort`.
+Default implementation is the `Kinetics` class. Internally, it calls `EnginePort.compute()` for each dimension.
+Implementing `CloneableKineticsPort` allows creating copies with the same configuration.

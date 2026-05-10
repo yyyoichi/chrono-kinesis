@@ -12,17 +12,17 @@ export interface ClockPort extends ActivityPort, DisposablePort {
 
 ## PURPOSE
 
-外部イベント（ポインター操作・リサイズなど）を検知してシミュレーターを起床させるポート。
-`Simulator.add()` に渡すことで、イベント発生時にシミュレーションループを再開する。
+A port to detect external events (pointer operations, resizes, etc.) and wake up the simulator.
+By passing it to `Simulator.add()`, the simulation loop restarts when an event occurs.
 
-| メソッド | 説明 |
+| Method | Description |
 | --- | --- |
-| `onHeartbeat(cb)` | イベント発生時に呼ばれるコールバックを登録する |
-| `isActive()` | クロックが現在イベントを発行中であれば `true` を返す（`ActivityPort` より） |
-| `destroy()` | イベントリスナーを解放する（`DisposablePort` より） |
+| `onHeartbeat(cb)` | Registers a callback to be called when an event occurs |
+| `isActive()` | Returns `true` if the clock is currently firing events (from `ActivityPort`) |
+| `destroy()` | Releases event listeners (from `DisposablePort`) |
 
 ## NOTE
 
-`ActivityPort` と `DisposablePort` を継承する。
-シミュレーターは pause 中に heartbeat を受信すると `wake()` を呼んでループを再起動する。
-複数の Clock を束ねる場合は `ClockComposer` を使用する。
+Inherits from `ActivityPort` and `DisposablePort`.
+When the Simulator is paused and receives a heartbeat, it calls `wake()` to restart the loop.
+Use `ClockComposer` when combining multiple Clocks.

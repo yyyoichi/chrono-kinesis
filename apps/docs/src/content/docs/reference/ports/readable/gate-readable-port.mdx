@@ -12,14 +12,14 @@ export interface GateReadablePort extends SnapshotPort {
 
 ## PURPOSE
 
-ON/OFF の 2 値ゲート状態を提供するポート。
-ポインターの標準ボタンが押されているかどうかなど、バイナリなイベント状態を表現する。
+A port providing binary (ON/OFF) gate state.
+Expresses binary event states such as whether a pointer's primary button is pressed.
 
-| プロパティ | 説明 |
+| Property | Description |
 | --- | --- |
-| `gate` | `0`（非アクティブ）または `1`（アクティブ） |
+| `gate` | `0` (inactive) or `1` (active) |
 
 ## NOTE
 
-`SnapshotPort` を継承しなければならない。
-`snapshot()` が呼ばれたとき、その時点の値を内部に確定して保持し、次の `snapshot()` まで `gate` の値が変化しないことを期待する。
+Must inherit from `SnapshotPort`.
+When `snapshot()` is called, the port must capture the value at that moment and maintain it internally, ensuring that `gate` does not change until the next `snapshot()`.

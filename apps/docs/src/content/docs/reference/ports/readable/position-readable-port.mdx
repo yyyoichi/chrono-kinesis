@@ -12,16 +12,16 @@ export interface PositionReadablePort extends SnapshotPort {
 
 ## PURPOSE
 
-2D 座標（x, y）を提供するポート。
-ポインターの位置や DOM 要素の位置など、ペア値で座標を表現する場合に利用する。
+A port providing 2D coordinates (x, y).
+Used when expressing coordinates as a pair value, such as pointer position or DOM element position.
 
-| メソッド | 説明 |
+| Method | Description |
 | --- | --- |
-| `position()` | スナップショット時点の `[x, y]` 座標を返す |
+| `position()` | Returns the `[x, y]` coordinates at the time of snapshot |
 
 ## NOTE
 
-`SnapshotPort` を継承しなければならない。
-`snapshot()` が呼ばれたとき、その時点の座標タプルを内部に確定して保持することを期待する。
-同一 tick 内では `position()` は常に同じ配列オブジェクト（`===` で等価）を返さなければならない。
-座標が変化しない場合は、`snapshot()` をまたいで同じ参照を返し続けてよい。
+Must inherit from `SnapshotPort`.
+When `snapshot()` is called, the port must capture the coordinate tuple at that moment and maintain it internally.
+Within a single tick, `position()` must return the same array object (equivalent by `===`).
+If coordinates don't change, the same reference may be returned across multiple snapshots.

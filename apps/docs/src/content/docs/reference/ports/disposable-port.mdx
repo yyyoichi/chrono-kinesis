@@ -12,14 +12,14 @@ export interface DisposablePort {
 
 ## PURPOSE
 
-リソース（イベントリスナー・タイマーなど）を解放するためのポート。
-`Simulator.destroy()` から各 Clock の `destroy()` が呼ばれる。
+A port to release resources (event listeners, timers, etc.).
+Called from `Simulator.destroy()` to dispose each Clock.
 
-| メソッド | 説明 |
+| Method | Description |
 | --- | --- |
-| `destroy()` | 保持しているリソースをすべて解放する |
+| `destroy()` | Releases all held resources |
 
 ## NOTE
 
-`ClockPort` がこのポートを継承する。
-`Simulator.destroy()` を呼ぶと、登録されたすべての Clock の `destroy()` が順に実行される。
+`ClockPort` inherits this port.
+Calling `Simulator.destroy()` executes the `destroy()` method of all registered Clocks in sequence.

@@ -12,14 +12,14 @@ export interface ActivityPort {
 
 ## PURPOSE
 
-シミュレーション対象が現在アクティブかどうかを問い合わせるためのポート。
-`Simulator` はこのポートを参照し、全コンテキストが非アクティブになった時点でループを自動停止する。
+A port to query whether the simulation subject is currently active.
+The Simulator refers to this port and automatically stops the loop when all contexts become inactive.
 
-| メソッド | 説明 |
+| Method | Description |
 | --- | --- |
-| `isActive()` | アクティブであれば `true` を返す |
+| `isActive()` | Returns `true` if active |
 
 ## NOTE
 
-`ClockPort` および `KineticsPort` がこのポートを継承する。
-Simulator はフレームごとに Clock と Kinetics の両方の `isActive()` を確認し、どちらかがアクティブな間はループを継続する。
+`ClockPort` and `KineticsPort` inherit this port.
+The Simulator checks `isActive()` on both Clock and Kinetics each frame, continuing the loop while either is active.

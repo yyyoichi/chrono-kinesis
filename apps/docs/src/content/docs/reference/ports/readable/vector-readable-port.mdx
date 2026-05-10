@@ -12,16 +12,16 @@ export interface VectorReadablePort extends SnapshotPort {
 
 ## PURPOSE
 
-n 次元の数値配列を提供するポート。
-`SimulationContext.target` として指定することで、`KineticsPort` が追従する目標ベクトルを定義する。
+A port providing an n-dimensional numeric array.
+By specifying it as `SimulationContext.target`, you define the target vector that `KineticsPort` will follow.
 
-| メソッド | 説明 |
+| Method | Description |
 | --- | --- |
-| `vector()` | スナップショット時点のベクトル値を返す |
+| `vector()` | Returns the vector value at the time of snapshot |
 
 ## NOTE
 
-`SnapshotPort` を継承しなければならない。
-`snapshot()` が呼ばれたとき、その時点の配列を内部に確定して保持することを期待する。
-同一 tick 内では `vector()` は常に同じ配列オブジェクト（`===` で等価）を返さなければならない。
-配列の内容が変化しない場合は、`snapshot()` をまたいで同じ参照を返し続けてよい。
+Must inherit from `SnapshotPort`.
+When `snapshot()` is called, the port must capture the array at that moment and maintain it internally.
+Within a single tick, `vector()` must return the same array object (equivalent by `===`).
+If array contents don't change, the same reference may be returned across multiple snapshots.

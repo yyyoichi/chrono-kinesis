@@ -17,18 +17,18 @@ export interface EnginePort {
 
 ## PURPOSE
 
-1 次元の物理演算アルゴリズムを実装するポート。
-`KineticsPort` が次元ごとにこのポートを呼び出し、位置と速度を更新する。
+A port to implement a one-dimensional physics algorithm.
+`KineticsPort` calls this port for each dimension to update position and velocity.
 
-| 引数 | 説明 |
+| Parameter | Description |
 | --- | --- |
-| `dt` | ステップ時間（秒） |
-| `position` | 現在位置 |
-| `velocity` | 現在速度 |
-| `target` | 目標位置 |
-| `out` | 演算結果の書き込み先（`position`, `velocity`） |
+| `dt` | Step time in seconds |
+| `position` | Current position |
+| `velocity` | Current velocity |
+| `target` | Target position |
+| `out` | Output object for results (`position`, `velocity`) |
 
 ## NOTE
 
-標準実装として `SpringEngine`・`LinearEngine`・`DirectEngine` が提供されている。
-カスタム実装を渡すことで任意の補間アルゴリズムを差し込める。
+Standard implementations provided: `SpringEngine`, `LinearEngine`, `DirectEngine`.
+Custom implementations can be passed to use arbitrary interpolation algorithms.

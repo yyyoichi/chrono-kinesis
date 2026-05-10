@@ -13,10 +13,10 @@ title: Readable Ports
 - [RatioReadablePort](./ratio-readable-port)
 - [VectorReadablePort](./vector-readable-port)
 
-## 共通規約
+## Common Conventions
 
-すべての Readable Port は [`SnapshotPort`](../snapshot-port) を継承しなければならない。
-`snapshot()` が呼ばれた時点で値を内部に確定し、次の `snapshot()` までその値を返し続けることを期待する。
+All Readable Ports must inherit from [`SnapshotPort`](../snapshot-port).
+When `snapshot()` is called, the port must capture the current value as internal state and continue returning that value until the next `snapshot()` is called.
 
-オブジェクトを返すメソッド（`vector()`・`position()`・`size()` など）は、同一 tick 内では常に同じオブジェクト参照（`===` で等価）を返すこと。
-配列の内容が変化しない限り、`snapshot()` をまたいでも同じ参照を返し続けてよい。
+Methods that return objects (`vector()`, `position()`, `size()`, etc.) must return the same object reference (equivalent by `===`) within a single tick.
+If the array contents don't change, the same reference may be returned across multiple snapshots.
